@@ -31,47 +31,18 @@
 
         select, input { padding: 10px; border: 1px solid #ddd; border-radius: 5px; width: 100%; box-sizing: border-box; }
 
-        /* SOLUCIÓN AL DESBORDE: Contenedor con deslizamiento horizontal */
-        .product-slider-wrapper {
-            background: var(--blanco);
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        .product-slider-title {
-            margin: 0 0 10px 0;
-            font-size: 14px;
-            color: var(--azul-loyal);
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
+        /* Estilos para los cuadros de productos */
         .product-container { 
-            display: flex; 
-            gap: 15px; 
-            overflow-x: auto; 
-            padding-bottom: 8px;
-            scroll-behavior: smooth;
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
+            gap: 15px; margin-bottom: 15px; 
         }
-        /* Estilo de la barra de scroll para que sea sutil */
-        .product-container::-webkit-scrollbar { height: 6px; }
-        .product-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
-        .product-container::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
-        .product-container::-webkit-scrollbar-thumb:hover { background: var(--dorado-loyal); }
-
         .product-card { 
-            flex: 0 0 160px; /* Tamaño fijo para que no se deformen */
-            background: var(--azul-loyal); 
-            color: white; 
-            padding: 12px; 
-            border-radius: 8px; 
-            text-align: center; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            border-left: 4px solid var(--dorado-loyal);
+            background: var(--azul-loyal); color: white; padding: 15px; border-radius: 8px; 
+            text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        .product-card h4 { margin: 0; font-size: 11px; text-transform: uppercase; color: #bdc3c7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .product-card p { margin: 5px 0 0; font-size: 18px; font-weight: bold; color: var(--dorado-loyal); }
+        .product-card h4 { margin: 0; font-size: 12px; text-transform: uppercase; color: var(--dorado-loyal); }
+        .product-card p { margin: 5px 0 0; font-size: 20px; font-weight: bold; }
 
         .kpi-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px; }
         .kpi-card { background: var(--blanco); padding: 20px; border-radius: 10px; text-align: center; border-top: 5px solid var(--dorado-loyal); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
@@ -128,11 +99,8 @@
         </div>
     </div>
 
-    <div class="product-slider-wrapper">
-        <div class="product-slider-title">Pólizas por Producto</div>
-        <div id="productGrid" class="product-container">
-            </div>
-    </div>
+    <div id="productGrid" class="product-container">
+        </div>
 
     <div class="kpi-container">
         <div class="kpi-card"><h3>Total NAP</h3><p id="kpiNap">$0.00</p></div>
@@ -171,6 +139,7 @@
     </div>
 
     <script>
+        // PEGA AQUÍ TU ENLACE DE PUBLICACIÓN DE GOOGLE SHEETS (CSV)
         const URL_SHEET = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE35F21xvxnugbjZCUCdtL_YQarjHiY68TJiujptOEsRedXHgvbydTh3QoBG1A48IkbOyjGQmGQOs5/pub?output=csv';
 
         let dataGlobal = [];
@@ -247,14 +216,7 @@
             const counts = {};
             data.forEach(d => { if(d.PRODUCTO) counts[d.PRODUCTO] = (counts[d.PRODUCTO] || 0) + 1; });
 
-            const sortedProducts = Object.keys(counts).sort();
-            
-            if(sortedProducts.length === 0) {
-                grid.innerHTML = '<div style="color:#777; font-size:13px; padding:5px;">No hay productos con estos filtros</div>';
-                return;
-            }
-
-            sortedProducts.forEach(prod => {
+            Object.keys(counts).sort().forEach(prod => {
                 const card = document.createElement('div');
                 card.className = 'product-card';
                 card.innerHTML = `<h4>${prod}</h4><p>${counts[prod]}</p>`;
@@ -268,10 +230,10 @@
             const agentesUnicos = [...new Set(data.map(d => d.AGENTE))].length;
             const promedio = totalPol > 0 ? totalNap / totalPol : 0;
 
-            document.getElementById('kpiNap').innerText = `$${totalNap.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('kpiNap').innerText = `$${totalNap.toLocaleString()}`;
             document.getElementById('kpiPolizas').innerText = totalPol;
             document.getElementById('kpiAgentes').innerText = agentesUnicos;
-            document.getElementById('kpiPromedio').innerText = `$${promedio.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('kpiPromedio').innerText = `$${promedio.toLocaleString()}`;
         }
 
         function dibujarGraficos(data) {
@@ -287,9 +249,7 @@
             data.forEach(d => {
                 if(d.MES) mesesMap[d.MES] = (mesesMap[d.MES] || 0) + (parseFloat(d.NAP) || 0);
             });
-            
-            const ordenMeses = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
-            const labelsMeses = Object.keys(mesesMap).sort((a, b) => ordenMeses.indexOf(a) - ordenMeses.indexOf(b));
+            const labelsMeses = Object.keys(mesesMap);
             const valuesMeses = labelsMeses.map(l => mesesMap[l]);
 
             if(chartD) chartD.destroy();
@@ -300,8 +260,7 @@
                 data: {
                     labels: labelsDias,
                     datasets: [{ label: 'NAP', data: valuesDias, borderColor: '#d4af37', tension: 0.3, fill: true, backgroundColor: 'rgba(212, 175, 55, 0.1)' }]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
+                }
             });
 
             chartM = new Chart(document.getElementById('chartMeses'), {
@@ -309,8 +268,7 @@
                 data: {
                     labels: labelsMeses,
                     datasets: [{ label: 'NAP Total', data: valuesMeses, backgroundColor: '#0d2b45' }]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
+                }
             });
         }
 
