@@ -6,6 +6,10 @@
     <title>Loyal - Producción Healthspring</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Flatpickr para el selector de rango de fechas -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
     <style>
         :root {
             --azul-loyal: #0d2b45;
@@ -31,6 +35,20 @@
 
         select, input { padding: 10px; border: 1px solid #ddd; border-radius: 5px; width: 100%; box-sizing: border-box; }
 
+        .btn-limpiar {
+            background-color: var(--azul-loyal);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin-top: 23px;
+        }
+        .btn-limpiar:hover {
+            background-color: var(--dorado-loyal);
+            color: var(--azul-loyal);
+        }
+
         /* Estilos para los cuadros de productos */
         .product-container { 
             display: grid; 
@@ -48,20 +66,55 @@
         .kpi-card { background: var(--blanco); padding: 20px; border-radius: 10px; text-align: center; border-top: 5px solid var(--dorado-loyal); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .kpi-card h3 { margin: 0; font-size: 14px; color: #777; text-transform: uppercase; }
         .kpi-card p { margin: 10px 0 0; font-size: 24px; font-weight: bold; color: var(--azul-loyal); }
+        .kpi-card .small-text { font-size: 14px; color: #666; margin-top: 5px; }
 
         .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
         .chart-box { background: var(--blanco); padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .chart-box h3 { margin-top: 0; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 10px; color: var(--azul-loyal); }
 
+        /* Estilos para la tabla de agentes */
         .table-container { background: var(--blanco); padding: 20px; border-radius: 10px; overflow-x: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
-        table th { background: var(--azul-loyal); color: white; padding: 12px; text-align: left; }
+        table th { background: var(--azul-loyal); color: white; padding: 12px; text-align: left; position: sticky; top: 0; }
         table td { padding: 10px; border-bottom: 1px solid #eee; }
         table tr:hover { background: #f1f1f1; }
 
+        /* Estilos para el desplegable */
+        .detail-row { display: none; background-color: #f9f9f9; }
+        .detail-row.show { display: table-row; }
+        .detail-table { width: 100%; margin: 0; background-color: #fff; border: 1px solid #ddd; }
+        .detail-table th { background-color: #e9ecef; color: var(--azul-loyal); font-size: 12px; padding: 8px; }
+        .detail-table td { padding: 8px; font-size: 12px; }
+        .btn-detalle { 
+            background-color: var(--dorado-loyal); 
+            color: var(--azul-loyal); 
+            border: none; 
+            padding: 5px 10px; 
+            border-radius: 5px; 
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 11px;
+        }
+        .btn-detalle:hover { background-color: var(--azul-loyal); color: white; }
+        .meta-cumplida { color: green; font-weight: bold; }
+        .meta-no-cumplida { color: red; font-weight: bold; }
+        .expand-icon { cursor: pointer; font-size: 18px; text-align: center; }
+        
         .status-msg { font-size: 12px; color: #d4af37; font-weight: bold; margin-top: 5px; }
         
-        @media (max-width: 768px) { .charts-grid { grid-template-columns: 1fr; } }
+        /* Estilos para flatpickr */
+        .flatpickr-calendar {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+        }
+        .date-range-input {
+            background-color: white;
+            cursor: pointer;
+        }
+        
+        @media (max-width: 768px) { 
+            .charts-grid { grid-template-columns: 1fr; }
+            .kpi-container { grid-template-columns: repeat(2, 1fr); }
+        }
     </style>
 </head>
 <body>
@@ -78,16 +131,16 @@
 
     <div class="filters">
         <div>
-            <label>Mes:</label>
-            <select id="selMes"><option value="TODOS">Cargando...</option></select>
-        </div>
-        <div>
-            <label>Día (Emisión):</label>
-            <select id="selDia"><option value="TODOS">Cargando...</option></select>
+            <label>Rango de Fechas:</label>
+            <input type="text" id="dateRange" class="date-range-input" placeholder="Selecciona un rango de fechas">
         </div>
         <div>
             <label>Agente:</label>
             <select id="selAgente"><option value="TODOS">Cargando...</option></select>
+        </div>
+        <div>
+            <label>Agencias:</label>
+            <select id="selSubAgencia"><option value="TODOS">Cargando...</option></select>
         </div>
         <div>
             <label>Estatus:</label>
@@ -97,16 +150,20 @@
             <label>Producto:</label>
             <select id="selProducto"><option value="TODOS">Cargando...</option></select>
         </div>
+        <div>
+            <button id="btnLimpiar" class="btn-limpiar">🗑️ Limpiar Filtros</button>
+        </div>
     </div>
 
     <div id="productGrid" class="product-container">
         </div>
 
     <div class="kpi-container">
-        <div class="kpi-card"><h3>Total NAP</h3><p id="kpiNap">$0.00</p></div>
+        <div class="kpi-card"><h3>Total NAP</h3><p id="kpiNap">0.00</p></div>
         <div class="kpi-card"><h3>Pólizas</h3><p id="kpiPolizas">0</p></div>
         <div class="kpi-card"><h3>Agentes</h3><p id="kpiAgentes">0</p></div>
-        <div class="kpi-card"><h3>Prima Promedio</h3><p id="kpiPromedio">$0.00</p></div>
+        <div class="kpi-card"><h3>Persistencia</h3><p id="kpiPersistencia">0%</p><div class="small-text" id="persistenciaDetalle">Activas: 0 | Total: 0</div></div>
+        <div class="kpi-card"><h3>Top 3 Estados</h3><p id="kpiTopEstados" style="font-size: 16px;">-</p></div>
     </div>
 
     <div class="charts-grid">
@@ -121,30 +178,58 @@
     </div>
 
     <div class="table-container">
-        <h3>Detalle de Información</h3>
-        <table id="tablaData">
+        <h3>📊 Desempeño por Agente (Meta mensual: $10,000 NAP)</h3>
+        <table id="tablaAgentes">
             <thead>
                 <tr>
-                    <th>Mes</th>
-                    <th>Fecha</th>
+                    <th style="width: 30px;"></th>
                     <th>Agente</th>
-                    <th>Producto</th>
-                    <th>Póliza N°</th>
-                    <th>NAP</th>
-                    <th>Estatus</th>
+                    <th>ID Producer</th>
+                    <th>Total NAP</th>
+                    <th>Persistencia</th>
+                    <th>Meta (10k)</th>
                 </tr>
             </thead>
-            <tbody></tbody>
+            <tbody id="tablaAgentesBody"></tbody>
         </table>
     </div>
 
     <script>
-        // PEGA AQUÍ TU ENLACE DE PUBLICACIÓN DE GOOGLE SHEETS (CSV)
+        // ENLACE DE PUBLICACIÓN DE GOOGLE SHEETS (CSV)
         const URL_SHEET = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE35F21xvxnugbjZCUCdtL_YQarjHiY68TJiujptOEsRedXHgvbydTh3QoBG1A48IkbOyjGQmGQOs5/pub?output=csv';
+        // Meta mensual sugerida
+        const META_MENSUAL = 10000;
 
         let dataGlobal = [];
         let chartD = null;
         let chartM = null;
+        let dateRangePicker = null;
+        let minFechaGlobal = null;
+        let maxFechaGlobal = null;
+
+        // Helper para parsear fechas en formato MM/DD/AAAA
+        function parseFecha(fechaStr) {
+            if (!fechaStr) return null;
+            let partes = fechaStr.split('/');
+            if (partes.length === 3) {
+                let mes = parseInt(partes[0], 10) - 1;
+                let dia = parseInt(partes[1], 10);
+                let anio = parseInt(partes[2], 10);
+                let fecha = new Date(anio, mes, dia);
+                if (!isNaN(fecha.getTime())) return fecha;
+            }
+            let fechaNat = new Date(fechaStr);
+            if (!isNaN(fechaNat.getTime())) return fechaNat;
+            return null;
+        }
+
+        function formatearFechaKey(fecha) {
+            if (!fecha) return null;
+            let anio = fecha.getFullYear();
+            let mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+            let dia = fecha.getDate().toString().padStart(2, '0');
+            return `${anio}-${mes}-${dia}`;
+        }
 
         function initAutoLoad() {
             Papa.parse(URL_SHEET, {
@@ -153,6 +238,20 @@
                 skipEmptyLines: true,
                 complete: function(results) {
                     dataGlobal = results.data;
+                    
+                    let fechasValidas = [];
+                    dataGlobal.forEach(d => {
+                        let fecha = parseFecha(d['FECHA DE EMISION']);
+                        if (fecha && !isNaN(fecha.getTime())) {
+                            fechasValidas.push(fecha);
+                        }
+                    });
+                    
+                    if (fechasValidas.length > 0) {
+                        minFechaGlobal = new Date(Math.min(...fechasValidas));
+                        maxFechaGlobal = new Date(Math.max(...fechasValidas));
+                    }
+                    
                     document.getElementById('status').innerText = '● Datos Sincronizados';
                     initDashboard();
                 }
@@ -161,52 +260,116 @@
 
         function initDashboard() {
             cargarSelects();
+            inicializarDateRangePicker();
+            configurarBotonLimpiar();
             procesarYFiltrar();
         }
 
+        function inicializarDateRangePicker() {
+            dateRangePicker = flatpickr("#dateRange", {
+                mode: "range",
+                dateFormat: "m/d/Y",
+                locale: "es",
+                allowInput: false,
+                onChange: function(selectedDates, dateStr, instance) {
+                    procesarYFiltrar();
+                },
+                onReady: function(selectedDates, dateStr, instance) {
+                    if (minFechaGlobal && maxFechaGlobal) {
+                        instance.setDate([minFechaGlobal, maxFechaGlobal]);
+                    }
+                }
+            });
+        }
+
+        function configurarBotonLimpiar() {
+            const btnLimpiar = document.getElementById('btnLimpiar');
+            btnLimpiar.addEventListener('click', function() {
+                document.getElementById('selAgente').value = 'TODOS';
+                document.getElementById('selSubAgencia').value = 'TODOS';
+                document.getElementById('selEstatus').value = 'TODOS';
+                document.getElementById('selProducto').value = 'TODOS';
+                
+                if (dateRangePicker && minFechaGlobal && maxFechaGlobal) {
+                    dateRangePicker.setDate([minFechaGlobal, maxFechaGlobal]);
+                }
+                
+                procesarYFiltrar();
+            });
+        }
+
         function cargarSelects() {
-            const meses = [...new Set(dataGlobal.map(item => item.MES))].filter(Boolean).sort();
-            const dias = [...new Set(dataGlobal.map(item => item['FECHA DE EMISION']))].filter(Boolean).sort();
             const agentes = [...new Set(dataGlobal.map(item => item.AGENTE))].filter(Boolean).sort();
+            const subAgencias = [...new Set(dataGlobal.map(item => item['SUB-AGENCIAS']))].filter(Boolean).sort();
             const estatus = [...new Set(dataGlobal.map(item => item.ESTATUS))].filter(Boolean).sort();
             const productos = [...new Set(dataGlobal.map(item => item.PRODUCTO))].filter(Boolean).sort();
 
-            fillSelect('selMes', meses);
-            fillSelect('selDia', dias);
             fillSelect('selAgente', agentes);
+            fillSelect('selSubAgencia', subAgencias);
             fillSelect('selEstatus', estatus);
             fillSelect('selProducto', productos);
 
-            [ 'selMes', 'selDia', 'selAgente', 'selEstatus', 'selProducto' ].forEach(id => {
+            ['selAgente', 'selSubAgencia', 'selEstatus', 'selProducto'].forEach(id => {
                 document.getElementById(id).addEventListener('change', procesarYFiltrar);
             });
         }
 
         function fillSelect(id, items) {
             const el = document.getElementById(id);
+            if(!el) return;
             el.innerHTML = `<option value="TODOS">Todos</option>`;
-            items.forEach(i => el.innerHTML += `<option value="${i}">${i}</option>`);
+            items.forEach(i => {
+                let safeValue = i.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                el.innerHTML += `<option value="${safeValue.replace(/"/g, '&quot;')}">${safeValue}</option>`;
+            });
         }
 
-        function procesarYFiltrar() {
-            const fMes = document.getElementById('selMes').value;
-            const fDia = document.getElementById('selDia').value;
+        function filtrarPorRangoFechas(fechaStr, startDate, endDate) {
+            if (!startDate && !endDate) return true;
+            const fecha = parseFecha(fechaStr);
+            if (!fecha) return false;
+            const fechaNormalizada = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
+            if (startDate && fechaNormalizada < startDate) return false;
+            if (endDate && fechaNormalizada > endDate) return false;
+            return true;
+        }
+
+        function obtenerDatosFiltrados() {
             const fAgente = document.getElementById('selAgente').value;
+            const fSubAgencia = document.getElementById('selSubAgencia').value;
             const fEstatus = document.getElementById('selEstatus').value;
             const fProd = document.getElementById('selProducto').value;
+            
+            let startDate = null;
+            let endDate = null;
+            if (dateRangePicker && dateRangePicker.selectedDates && dateRangePicker.selectedDates.length >= 2) {
+                startDate = dateRangePicker.selectedDates[0];
+                endDate = dateRangePicker.selectedDates[1];
+                if (startDate) startDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+                if (endDate) endDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+            } else if (dateRangePicker && dateRangePicker.selectedDates && dateRangePicker.selectedDates.length === 1) {
+                let singleDate = dateRangePicker.selectedDates[0];
+                if (singleDate) {
+                    startDate = new Date(singleDate.getFullYear(), singleDate.getMonth(), singleDate.getDate());
+                    endDate = new Date(singleDate.getFullYear(), singleDate.getMonth(), singleDate.getDate());
+                }
+            }
 
-            const filtered = dataGlobal.filter(d => {
-                return (fMes === 'TODOS' || d.MES === fMes) &&
-                       (fDia === 'TODOS' || d['FECHA DE EMISION'] === fDia) &&
-                       (fAgente === 'TODOS' || d.AGENTE === fAgente) &&
+            return dataGlobal.filter(d => {
+                if(!filtrarPorRangoFechas(d['FECHA DE EMISION'], startDate, endDate)) return false;
+                return (fAgente === 'TODOS' || d.AGENTE === fAgente) &&
+                       (fSubAgencia === 'TODOS' || d['SUB-AGENCIAS'] === fSubAgencia) &&
                        (fEstatus === 'TODOS' || d.ESTATUS === fEstatus) &&
                        (fProd === 'TODOS' || d.PRODUCTO === fProd);
             });
+        }
 
+        function procesarYFiltrar() {
+            const filtered = obtenerDatosFiltrados();
             actualizarCuadrosProductos(filtered);
             actualizarKPIs(filtered);
             dibujarGraficos(filtered);
-            dibujarTabla(filtered);
+            dibujarTablaAgentes(filtered);
         }
 
         function actualizarCuadrosProductos(data) {
@@ -222,26 +385,60 @@
                 card.innerHTML = `<h4>${prod}</h4><p>${counts[prod]}</p>`;
                 grid.appendChild(card);
             });
+            
+            if(Object.keys(counts).length === 0) {
+                grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:20px;">No hay datos para los filtros seleccionados</div>';
+            }
         }
 
         function actualizarKPIs(data) {
             const totalNap = data.reduce((acc, curr) => acc + (parseFloat(curr.NAP) || 0), 0);
             const totalPol = data.length;
             const agentesUnicos = [...new Set(data.map(d => d.AGENTE))].length;
-            const promedio = totalPol > 0 ? totalNap / totalPol : 0;
+            const polizasActivas = data.filter(d => d.ESTATUS && d.ESTATUS.toUpperCase() === 'ACTIVE').length;
+            const totalPolizas = data.length;
+            const persistencia = totalPolizas > 0 ? (polizasActivas / totalPolizas) * 100 : 0;
 
-            document.getElementById('kpiNap').innerText = `$${totalNap.toLocaleString()}`;
+            document.getElementById('kpiNap').innerText = `${totalNap.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
             document.getElementById('kpiPolizas').innerText = totalPol;
             document.getElementById('kpiAgentes').innerText = agentesUnicos;
-            document.getElementById('kpiPromedio').innerText = `$${promedio.toLocaleString()}`;
+            document.getElementById('kpiPersistencia').innerHTML = `${persistencia.toFixed(1)}%`;
+            document.getElementById('persistenciaDetalle').innerHTML = `Activas: ${polizasActivas} | Total: ${totalPolizas}`;
+            
+            const estadoNap = {};
+            data.forEach(d => {
+                const estado = d.ESTADO;
+                if(estado && typeof estado === 'string') {
+                    const napVal = parseFloat(d.NAP) || 0;
+                    estadoNap[estado] = (estadoNap[estado] || 0) + napVal;
+                }
+            });
+            
+            const sortedEstados = Object.entries(estadoNap).sort((a,b) => b[1] - a[1]);
+            const top3 = sortedEstados.slice(0,3);
+            let top3Text = '';
+            if(top3.length === 0) top3Text = 'Sin datos';
+            else {
+                top3.forEach(([estado, valor], idx) => {
+                    top3Text += `${idx+1}. ${estado}: ${valor.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}\n`;
+                });
+            }
+            document.getElementById('kpiTopEstados').innerHTML = top3Text.replace(/\n/g, '<br>');
         }
 
         function dibujarGraficos(data) {
             const diasMap = {};
             data.forEach(d => {
-                const fecha = d['FECHA DE EMISION'] || 'Sin Fecha';
-                diasMap[fecha] = (diasMap[fecha] || 0) + (parseFloat(d.NAP) || 0);
+                const fechaStr = d['FECHA DE EMISION'];
+                const fecha = parseFecha(fechaStr);
+                if(fecha && !isNaN(fecha.getTime())) {
+                    const key = formatearFechaKey(fecha);
+                    diasMap[key] = (diasMap[key] || 0) + (parseFloat(d.NAP) || 0);
+                } else if(fechaStr) {
+                    diasMap[fechaStr] = (diasMap[fechaStr] || 0) + (parseFloat(d.NAP) || 0);
+                }
             });
+            
             const labelsDias = Object.keys(diasMap).sort();
             const valuesDias = labelsDias.map(l => diasMap[l]);
 
@@ -255,39 +452,146 @@
             if(chartD) chartD.destroy();
             if(chartM) chartM.destroy();
 
-            chartD = new Chart(document.getElementById('chartDias'), {
-                type: 'line',
-                data: {
-                    labels: labelsDias,
-                    datasets: [{ label: 'NAP', data: valuesDias, borderColor: '#d4af37', tension: 0.3, fill: true, backgroundColor: 'rgba(212, 175, 55, 0.1)' }]
-                }
-            });
+            const ctxD = document.getElementById('chartDias');
+            if(ctxD) {
+                chartD = new Chart(ctxD, {
+                    type: 'line',
+                    data: {
+                        labels: labelsDias,
+                        datasets: [{ label: 'NAP', data: valuesDias, borderColor: '#d4af37', tension: 0.3, fill: true, backgroundColor: 'rgba(212, 175, 55, 0.1)' }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: true }
+                });
+            }
 
-            chartM = new Chart(document.getElementById('chartMeses'), {
-                type: 'bar',
-                data: {
-                    labels: labelsMeses,
-                    datasets: [{ label: 'NAP Total', data: valuesMeses, backgroundColor: '#0d2b45' }]
-                }
-            });
+            const ctxM = document.getElementById('chartMeses');
+            if(ctxM) {
+                chartM = new Chart(ctxM, {
+                    type: 'bar',
+                    data: {
+                        labels: labelsMeses,
+                        datasets: [{ label: 'NAP Total', data: valuesMeses, backgroundColor: '#0d2b45' }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: true }
+                });
+            }
         }
 
-        function dibujarTabla(data) {
-            const tbody = document.querySelector('#tablaData tbody');
+        function dibujarTablaAgentes(data) {
+            const tbody = document.getElementById('tablaAgentesBody');
+            if(!tbody) return;
             tbody.innerHTML = '';
-            data.slice(-50).reverse().forEach(d => { 
+            
+            // Agrupar por agente
+            const agentesMap = new Map();
+            data.forEach(d => {
+                const agente = d.AGENTE;
+                if(!agente) return;
+                
+                if(!agentesMap.has(agente)) {
+                    agentesMap.set(agente, {
+                        idAgente: d['ID AGENTE'] || d['ID_AGENTE'] || 'N/A',
+                        polizas: [],
+                        totalNap: 0,
+                        activas: 0
+                    });
+                }
+                
+                const agenteData = agentesMap.get(agente);
+                const napVal = parseFloat(d.NAP) || 0;
+                agenteData.polizas.push(d);
+                agenteData.totalNap += napVal;
+                if(d.ESTATUS && d.ESTATUS.toUpperCase() === 'ACTIVE') {
+                    agenteData.activas++;
+                }
+            });
+            
+            // Convertir a array y ordenar por total NAP descendente
+            const agentesArray = Array.from(agentesMap.entries()).map(([nombre, data]) => ({
+                nombre: nombre,
+                idAgente: data.idAgente,
+                totalNap: data.totalNap,
+                totalPolizas: data.polizas.length,
+                activas: data.activas,
+                persistencia: data.polizas.length > 0 ? (data.activas / data.polizas.length) * 100 : 0,
+                polizas: data.polizas
+            })).sort((a,b) => b.totalNap - a.totalNap);
+            
+            // Renderizar cada agente
+            agentesArray.forEach((agente, idx) => {
+                const rowId = `agente_${idx}_${Date.now()}`;
+                const cumpleMeta = agente.totalNap >= META_MENSUAL;
+                
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${d.MES || ''}</td>
-                    <td>${d['FECHA DE EMISION'] || ''}</td>
-                    <td>${d.AGENTE || ''}</td>
-                    <td>${d.PRODUCTO || ''}</td>
-                    <td>${d['N° POLIZA'] || ''}</td>
-                    <td>$${parseFloat(d.NAP || 0).toFixed(2)}</td>
-                    <td style="color: ${d.ESTATUS === 'ACTIVE' ? 'green' : 'red'}"><strong>${d.ESTATUS || ''}</strong></td>
+                    <td class="expand-icon" onclick="toggleDetalle('${rowId}')">▶</td>
+                    <td><strong>${agente.nombre}</strong></td>
+                    <td>${agente.idAgente}</td>
+                    <td>$${agente.totalNap.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td>${agente.persistencia.toFixed(1)}% (${agente.activas}/${agente.totalPolizas})</td>
+                    <td class="${cumpleMeta ? 'meta-cumplida' : 'meta-no-cumplida'}">
+                        ${cumpleMeta ? '✓ Cumplida' : '✗ No cumplida'} 
+                        (${((agente.totalNap / META_MENSUAL) * 100).toFixed(1)}%)
+                    </td>
                 `;
                 tbody.appendChild(tr);
+                
+                // Fila de detalle (oculta inicialmente)
+                const trDetail = document.createElement('tr');
+                trDetail.className = 'detail-row';
+                trDetail.id = rowId;
+                trDetail.innerHTML = `
+                    <td colspan="6">
+                        <div style="padding: 15px; background: #f8f9fa;">
+                            <strong>📋 Detalle de pólizas de ${agente.nombre} (ID: ${agente.idAgente})</strong>
+                            <table class="detail-table" style="margin-top: 10px; width: 100%;">
+                                <thead>
+                                    <tr>
+                                        <th>N° Póliza</th>
+                                        <th>Estado</th>
+                                        <th>Producto</th>
+                                        <th>NAP</th>
+                                        <th>Estatus</th>
+                                        <th>Fecha Emisión</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${agente.polizas.map(p => `
+                                        <tr>
+                                            <td>${p['N° POLIZA'] || 'N/A'}</td>
+                                            <td>${p.ESTADO || 'N/A'}</td>
+                                            <td>${p.PRODUCTO || 'N/A'}</td>
+                                            <td>$${(parseFloat(p.NAP) || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                                            <td style="color: ${p.ESTATUS === 'ACTIVE' ? 'green' : 'red'}">${p.ESTATUS || 'N/A'}</td>
+                                            <td>${p['FECHA DE EMISION'] || 'N/A'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(trDetail);
             });
+            
+            if(agentesArray.length === 0) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td colspan="6" style="text-align:center;">No hay datos para los filtros seleccionados</td>`;
+                tbody.appendChild(tr);
+            }
+        }
+        
+        // Función global para toggle del detalle
+        window.toggleDetalle = function(rowId) {
+            const detailRow = document.getElementById(rowId);
+            if(detailRow) {
+                detailRow.classList.toggle('show');
+                // Cambiar el ícono de la fila anterior
+                const expandIcon = detailRow.previousElementSibling.querySelector('.expand-icon');
+                if(expandIcon) {
+                    expandIcon.textContent = detailRow.classList.contains('show') ? '▼' : '▶';
+                }
+            }
         }
 
         initAutoLoad();
