@@ -195,8 +195,8 @@
     </div>
 
     <script>
-        // ENLACE DE PUBLICACIÓN DE GOOGLE SHEETS (CSV)
-        const URL_SHEET = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE35F21xvxnugbjZCUCdtL_YQarjHiY68TJiujptOEsRedXHgvbydTh3QoBG1A48IkbOyjGQmGQOs5/pub?output=csv';
+        // ENLACE DE PUBLICACIÓN DE GOOGLE SHEETS (CSV) - ACTUALIZADO
+        const URL_SHEET = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfwEAFi_M-pfnW6dDjOKu91MfW4G4nSIKOAi4lG1-yx7OT3-e1it_0T3egcXyRPw/pub?output=csv';
         // Meta mensual sugerida
         const META_MENSUAL = 10000;
 
@@ -254,6 +254,10 @@
                     
                     document.getElementById('status').innerText = '● Datos Sincronizados';
                     initDashboard();
+                },
+                error: function(error) {
+                    console.error('Error al cargar los datos:', error);
+                    document.getElementById('status').innerText = '⚠️ Error al cargar datos';
                 }
             });
         }
