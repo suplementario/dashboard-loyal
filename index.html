@@ -232,7 +232,7 @@
         </div>
         <div style="overflow-x: auto;">
             <table class="tabla-productos-compare" id="tablaComparativoProductos">
-                <thead><tr><th>PRODUCTO</th><th id="thMes1">NAP MES 1</th><th id="thMes2">NAP MES 2</th><th>VARIACIÓN (%)</th></tr></thead>
+                <thead><tr><th>PRODUCTO</th><th id="thMes1">NAP MES 1</th><th id="thMes2">NAP MES 2</th><th>VARIACIÓN (%)</th></thead>
                 <tbody id="tbodyComparativoProductos"><tr><td colspan="4">--</td></tr>
                 </tbody>
             </table>
@@ -248,7 +248,7 @@
     <div class="table-container">
         <h3 style="font-size: 1rem;">📊 PRODUCCIÓN POR AGENTE (META: $10,000 NAP POR MES)</h3>
         <table id="tablaAgentes">
-            <thead><tr><th style="width:30px"></th><th>AGENTE</th><th>TOTAL NAP</th><th>PERSISTENCIA</th><th>META (TOTAL PERÍODO)</th></tr></thead>
+            <thead><tr><th style="width:30px"></th><th>AGENTE</th><th>TOTAL NAP</th><th>PERSISTENCIA</th><th>META (TOTAL PERÍODO)</th></thead>
             <tbody id="tablaAgentesBody"></tbody>
         </table>
         <div class="table-buttons">
@@ -363,10 +363,19 @@
 
         function parseFecha(fechaStr) {
             if (!fechaStr) return null;
+            // Intentar formato dd/mm/aaaa o mm/dd/aaaa según el dato real. Se probarán ambos.
             let partes = fechaStr.split('/');
             if (partes.length === 3) {
-                let mes = parseInt(partes[0],10)-1, dia = parseInt(partes[1],10), anio = parseInt(partes[2],10);
+                // Suponemos que es mm/dd/aaaa (formato americano) porque es lo común en estos CSVs
+                let mes = parseInt(partes[0],10)-1;
+                let dia = parseInt(partes[1],10);
+                let anio = parseInt(partes[2],10);
                 let fecha = new Date(anio, mes, dia);
+                if (!isNaN(fecha.getTime())) return fecha;
+                // Si falla, probar dd/mm/aaaa
+                mes = parseInt(partes[1],10)-1;
+                dia = parseInt(partes[0],10);
+                fecha = new Date(anio, mes, dia);
                 if (!isNaN(fecha.getTime())) return fecha;
             }
             let fechaNat = new Date(fechaStr);
@@ -429,7 +438,7 @@
             const mesFinStr = document.getElementById('comparativoMesFin').value;
             if(!mesInicioStr || !mesFinStr) {
                 document.getElementById('comparativoCards').innerHTML = '<div class="status-msg">Seleccione ambos meses para comparar</div>';
-                document.getElementById('tbodyComparativoProductos').innerHTML = '<td><td colspan="4">Seleccione dos meses</td></tr>';
+                document.getElementById('tbodyComparativoProductos').innerHTML = '<tr><td colspan="4">Seleccione dos meses</td></tr>';
                 if(chartComparativo) chartComparativo.destroy();
                 return;
             }
@@ -952,7 +961,7 @@
                     <td class="semanas-cumplidas">${r.semanasTexto}</td>
                     <td>$${r.metaMensual.toLocaleString()}</td>
                     <td class="${r.claseMes}">${r.pctMes.toFixed(1)}%</td>
-                </tr>
+                </table>
             `).join('');
         }
         
@@ -970,15 +979,38 @@
             return new Date(d.setDate(diff));
         }
         
+        // Función mejorada para dibujar gráficos: ahora ordena cronológicamente y respeta el filtro de fechas
         function dibujarGraficos(data) {
+            // Gráfico de tendencia diaria (sin cambios)
             let diasMap = {};
             data.forEach(d=>{ let f = parseFecha(d.FECHA_EMISION); if(f) diasMap[formatearFechaKey(f)] = (diasMap[formatearFechaKey(f)]||0)+d.NAP_CALC; });
             let labelsDias = Object.keys(diasMap).sort(), valuesDias = labelsDias.map(l=>diasMap[l]);
-            let mesesMap = {};
-            data.forEach(d=>{ if(d.MES) mesesMap[d.MES] = (mesesMap[d.MES]||0)+d.NAP_CALC; });
-            let labelsMeses = Object.keys(mesesMap).sort(), valuesMeses = labelsMeses.map(l=>mesesMap[l]);
-            if(chartD) chartD.destroy(); if(chartM) chartM.destroy();
+            if(chartD) chartD.destroy();
             chartD = new Chart(document.getElementById('chartDias'), { type:'line', data:{ labels:labelsDias, datasets:[{ label:'NAP', data:valuesDias, borderColor:'#d4af37', tension:0.3, fill:true, backgroundColor:'rgba(212,175,55,0.1)' }] }, options:{ responsive:true, maintainAspectRatio:true } });
+            
+            // Gráfico NAP por Mes: usando la fecha real para agrupar y ordenar cronológicamente
+            const mesesMap = new Map(); // clave: YYYY-MM, valor: suma NAP
+            data.forEach(d => {
+                const fecha = parseFecha(d.FECHA_EMISION);
+                if(fecha) {
+                    const anioMes = `${fecha.getFullYear()}-${(fecha.getMonth()+1).toString().padStart(2,'0')}`;
+                    const nap = d.NAP_CALC;
+                    mesesMap.set(anioMes, (mesesMap.get(anioMes) || 0) + nap);
+                }
+            });
+            // Ordenar las claves cronológicamente
+            const sortedKeys = Array.from(mesesMap.keys()).sort();
+            const labelsMeses = sortedKeys.map(key => {
+                const [year, month] = key.split('-');
+                const fecha = new Date(parseInt(year), parseInt(month)-1, 1);
+                const nombreMes = fecha.toLocaleString('es', { month: 'long' }).toUpperCase();
+                // Si hay más de un año, incluir el año para claridad
+                const añosUnicos = new Set(sortedKeys.map(k => k.split('-')[0]));
+                return añosUnicos.size > 1 ? `${nombreMes} ${year}` : nombreMes;
+            });
+            const valuesMeses = sortedKeys.map(key => mesesMap.get(key));
+            
+            if(chartM) chartM.destroy();
             chartM = new Chart(document.getElementById('chartMeses'), { type:'bar', data:{ labels:labelsMeses, datasets:[{ label:'NAP Total', data:valuesMeses, backgroundColor:'#0d2b45' }] }, options:{ responsive:true, maintainAspectRatio:true } });
         }
         
@@ -1007,7 +1039,7 @@
                 tr.innerHTML = `<td class="expand-icon" onclick="toggleDetalle('${rowId}')">▶</td><td><strong>${escapeHtml(ag.nombre)}</strong></td><td>$${ag.totalNap.toLocaleString(undefined,{minFractionDigits:2})}</td><td>${ag.persistencia.toFixed(1)}% (${ag.activas}/${ag.totalPolizas})</td><td class="${cumple ? 'meta-cumplida' : 'meta-no-cumplida'}">${cumple ? '✓ Cumplida' : '✗ No cumplida'} ($${metaTotal.toLocaleString()} | ${porcMeta.toFixed(1)}%)</td>`;
                 tbody.appendChild(tr);
                 let trDetail = document.createElement('tr'); trDetail.className = 'detail-row'; trDetail.id = rowId;
-                trDetail.innerHTML = `<td colspan="5"><div style="padding:10px; background:#f8f9fa;"><strong>📋 Detalle de ${escapeHtml(ag.nombre)}</strong><br><span style="font-size:0.7rem;">ID Producer: ${escapeHtml(ag.idAgente)}</span><table class="detail-table" style="margin-top:8px;"><thead><tr><th>Póliza</th><th>Estado</th><th>Producto</th><th>NAP</th><th>Estatus</th><th>Fecha Emisión</th></thead><tbody>${ag.polizas.map(p => `<tr><td>${escapeHtml(p.N_POLIZA||'N/A')}</td><td>${escapeHtml(p.ESTADO||'N/A')}</td><td>${escapeHtml(p.PRODUCTO||'N/A')}</td><td>$${(p.NAP_CALC).toLocaleString(undefined,{minFractionDigits:2})}</td><td style="color:${p.ESTATUS==='ACTIVE'?'green':'red'}">${escapeHtml(p.ESTATUS||'N/A')}</td><td>${escapeHtml(p.FECHA_EMISION||'N/A')}</td></tr>`).join('')}</tbody></table></div></td>`;
+                trDetail.innerHTML = `<td colspan="5"><div style="padding:10px; background:#f8f9fa;"><strong>📋 Detalle de ${escapeHtml(ag.nombre)}</strong><br><span style="font-size:0.7rem;">ID Producer: ${escapeHtml(ag.idAgente)}</span><table class="detail-table" style="margin-top:8px;"><thead><tr><th>Póliza</th><th>Estado</th><th>Producto</th><th>NAP</th><th>Estatus</th><th>Fecha Emisión</th></tr></thead><tbody>${ag.polizas.map(p => `<tr><td>${escapeHtml(p.N_POLIZA||'N/A')}</td><td>${escapeHtml(p.ESTADO||'N/A')}</td><td>${escapeHtml(p.PRODUCTO||'N/A')}</td><td>$${(p.NAP_CALC).toLocaleString(undefined,{minFractionDigits:2})}</td><td style="color:${p.ESTATUS==='ACTIVE'?'green':'red'}">${escapeHtml(p.ESTATUS||'N/A')}</td><td>${escapeHtml(p.FECHA_EMISION||'N/A')}</td></tr>`).join('')}</tbody></table></div></td>`;
                 tbody.appendChild(trDetail);
             });
             if(!agentesArray.length) tbody.innerHTML = '<tr><td colspan="5">Sin datos</td></tr>';
