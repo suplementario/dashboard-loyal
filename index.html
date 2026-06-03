@@ -62,6 +62,12 @@
         .multi-select-option:hover { background-color: #f0f0f0; }
         .multi-select-option input { width: 18px; height: 18px; margin: 0; cursor: pointer; }
         .multi-select-option label { flex: 1; cursor: pointer; font-weight: normal; color: #333; }
+        .comparativo-control.disabled .multi-select-trigger,
+        .comparativo-control.disabled select {
+            opacity: 0.6;
+            pointer-events: none;
+            background-color: #e9ecef;
+        }
         .product-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px; }
         .product-card { background: var(--azul-loyal); color: white; padding: 12px; border-radius: 12px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
         .product-card h4 { margin: 0; font-size: 0.75rem; text-transform: uppercase; color: var(--dorado-loyal); }
@@ -108,7 +114,24 @@
         .table-buttons button { background-color: var(--azul-loyal); color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.8rem; transition: 0.2s; }
         .table-buttons button:hover { background-color: var(--dorado-loyal); color: var(--azul-loyal); }
         .status-msg { font-size: 0.7rem; color: var(--dorado-loyal); font-weight: bold; margin-top: 4px; }
-        @media (max-width: 480px) { body { padding: 10px; } .filters { grid-template-columns: 1fr; } .btn-limpiar { margin-top: 0; } }
+        .comparativo-container { background: var(--blanco); border-radius: 12px; margin-bottom: 20px; padding: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+        .comparativo-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; }
+        .comparativo-selector { display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap; }
+        .comparativo-selector .filter-group { min-width: 150px; }
+        .comparativo-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .comparativo-card { background: #f8f9fa; border-radius: 12px; padding: 12px; text-align: center; border-left: 4px solid var(--dorado-loyal); }
+        .comparativo-card h4 { margin: 0 0 8px 0; font-size: 0.8rem; color: var(--azul-loyal); text-transform: uppercase; }
+        .comparativo-card .valor { font-size: 1.4rem; font-weight: bold; color: var(--azul-loyal); }
+        .comparativo-card .variacion { font-size: 0.7rem; margin-top: 6px; }
+        .variacion-positiva { color: #2e7d32; }
+        .variacion-negativa { color: #c62828; }
+        .tabla-productos-compare { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+        .tabla-productos-compare th { background: var(--azul-loyal); color: white; padding: 8px; text-align: center; }
+        .tabla-productos-compare td { padding: 8px; border-bottom: 1px solid #eee; text-align: center; }
+        .producto-nombre { text-align: left; font-weight: bold; }
+        .btn-comparativo { background-color: var(--azul-loyal); color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.8rem; transition: 0.2s; margin-top: 23px; }
+        .btn-comparativo:hover { background-color: var(--dorado-loyal); color: var(--azul-loyal); }
+        @media (max-width: 640px) { .comparativo-selector { flex-direction: column; align-items: stretch; } }
     </style>
 </head>
 <body>
@@ -166,11 +189,46 @@
     <div class="metas-table-container">
         <h3>🎯 Alcance de Metas por Agencia</h3>
         <table class="metas-table" id="tablaMetasAgencias">
-            <thead>
-                <tr><th>Agencia</th><th>NAP Acumulado</th><th>Meta Semanal</th><th>% Promedio Semanal</th><th>Semanas que cumplieron meta</th><th>Meta Mensual</th><th>% Mes</th></tr>
-            </thead>
-            <tbody id="tablaMetasBody"><tr><td colspan="7">Cargando...</td></tr></tbody>
+            <thead><tr><th>Agencia</th><th>NAP Acumulado</th><th>Meta Semanal</th><th>% Promedio Semanal</th><th>Semanas que cumplieron meta</th><th>Meta Mensual</th><th>% Mes</th></tr></thead>
+            <tbody id="tablaMetasBody"><tr><td colspan="7">Cargando...</td></tr>
         </table>
+    </div>
+
+    <!-- Módulo Comparativo Mes a Mes con filtro independiente y controles deshabilitados hasta activar -->
+    <div class="comparativo-container">
+        <h3>📊 COMPARATIVO MES A MES</h3>
+        <div class="comparativo-header">
+            <div class="comparativo-selector">
+                <div class="filter-group comparativo-control" id="groupMesInicio">
+                    <label>📅 MES INICIAL:</label>
+                    <select id="comparativoMesInicio" disabled></select>
+                </div>
+                <div class="filter-group comparativo-control" id="groupMesFin">
+                    <label>📅 MES FINAL:</label>
+                    <select id="comparativoMesFin" disabled></select>
+                </div>
+                <div class="filter-group comparativo-control" id="groupAgenciaComparativo">
+                    <label>🏢 FILTRAR AGENCIAS:</label>
+                    <div class="multi-select-wrapper" id="comparativoAgenciaMultiSelect">
+                        <div class="multi-select-trigger"><span id="comparativoAgenciaSelectedText">Todas las agencias</span><span>▼</span></div>
+                        <div class="multi-select-dropdown" id="comparativoAgenciaDropdown"></div>
+                    </div>
+                </div>
+                <button id="btnActivarComparativo" class="btn-comparativo">🔍 ACTIVAR COMPARACIÓN</button>
+                <button id="btnLimpiarComparativo" class="btn-comparativo" style="display:none;">🗑️ LIMPIAR FILTROS</button>
+            </div>
+            <div class="status-msg" id="comparativoStatus" style="margin:0;"></div>
+        </div>
+        <div id="comparativoCards" class="comparativo-cards">
+            <div class="status-msg">Los filtros están deshabilitados. Haga clic en "ACTIVAR COMPARACIÓN" para comenzar.</div>
+        </div>
+        <div style="overflow-x: auto;">
+            <table class="tabla-productos-compare" id="tablaComparativoProductos">
+                <thead><tr><th>PRODUCTO</th><th id="thMes1">NAP MES 1</th><th id="thMes2">NAP MES 2</th><th>VARIACIÓN (%)</th></tr>
+                <tbody id="tbodyComparativoProductos"><tr><td colspan="4">--</td></tr></tbody>
+            </table>
+        </div>
+        <div class="chart-box" style="margin-top:20px;"><h3>COMPARATIVA NAP MENSUAL</h3><canvas id="chartComparativoMeses" style="max-height:200px;"></canvas></div>
     </div>
 
     <div class="charts-grid">
@@ -181,7 +239,7 @@
     <div class="table-container">
         <h3 style="font-size: 1rem;">📊 Producción por Agente (Meta: $10,000 NAP por mes)</h3>
         <table id="tablaAgentes">
-            <thead><tr><th style="width:30px"></th><th>Agente</th><th>Total NAP</th><th>Persistencia</th><th>Meta (total período)</th></tr></thead>
+            <thead><tr><th style="width:30px"></th><th>Agente</th><th>Total NAP</th><th>Persistencia</th><th>Meta (total período)</th></tr>
             <tbody id="tablaAgentesBody"></tbody>
         </table>
         <div class="table-buttons">
@@ -194,24 +252,25 @@
         const URL_SHEET = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfwEAFi_M-pfnW6dDjOKu91MfW4G4nSIKOAi4lG1-yx7OT3-e1it_0T3egcXyRPw/pub?output=csv';
         const META_MENSUAL_AGENTE = 10000;
         
-        // Metas por agencia (todas las de la imagen)
         const METAS_AGENCIAS = {
             "PLATINIUM": { semanal: 60000, mensual: 240000 },
             "NEW COUNTRY": { semanal: 20000, mensual: 80000 },
             "FAMILY SECURITY": { semanal: 20000, mensual: 80000 },
             "LOYAL PLUS": { semanal: 20000, mensual: 80000 },
             "RAM PAT": { semanal: 20000, mensual: 60000 },
-            "ONE INSURANCE": { semanal: 10000, mensual: 40000 }
+            "ONE INSURANCE": { semanal: 10000, mensual: 40000 },
+            "AMY INSURANCE": { semanal: 20000, mensual: 60000 },
+            "SAPPHIRE": { semanal: 20000, mensual: 60000 }
         };
         
-        // Mapeo de subagencias a agencia principal (para consolidación)
         const AGENCIA_PRINCIPAL = {
             "NEW COUNTRY": "PLATINIUM",
-            "RAM PAT": "LOYAL PLUS"
+            "RAM PAT": "LOYAL PLUS",
+            "AMY INSURANCE": "LOYAL PLUS"
         };
         
         let dataGlobal = [];
-        let chartD = null, chartM = null;
+        let chartD = null, chartM = null, chartComparativo = null;
         let dateRangePicker = null;
         let minFechaGlobal = null, maxFechaGlobal = null;
         
@@ -221,6 +280,11 @@
         let selectedStatuses = [];
         let agenciasDisponibles = [];
         let selectedAgencies = [];
+        
+        // Variables para el filtro independiente del comparativo
+        let comparativoAgenciasDisponibles = [];
+        let comparativoSelectedAgencies = [];  // vacío = todas
+        let comparativoActivo = false;          // controla si los filtros están habilitados
         
         let showAllAgents = false;
         let currentFilteredData = [];
@@ -309,6 +373,240 @@
             return mesesSet.size;
         }
 
+        // ========== COMPARATIVO con filtro propio y activación manual ==========
+        function obtenerDataParaComparativo() {
+            let start=null, end=null;
+            if(dateRangePicker && dateRangePicker.selectedDates && dateRangePicker.selectedDates.length>=2) {
+                start = dateRangePicker.selectedDates[0];
+                end = dateRangePicker.selectedDates[1];
+                if(start) start = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+                if(end) end = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+            } else if(dateRangePicker && dateRangePicker.selectedDates && dateRangePicker.selectedDates.length===1) {
+                let d = dateRangePicker.selectedDates[0];
+                if(d) start = end = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+            }
+            
+            return dataGlobal.filter(d => {
+                let fechaOk = true;
+                if(start || end) {
+                    let f = parseFecha(d.FECHA_EMISION);
+                    if(f) {
+                        let fn = new Date(f.getFullYear(), f.getMonth(), f.getDate());
+                        if(start && fn < start) fechaOk = false;
+                        if(end && fn > end) fechaOk = false;
+                    } else fechaOk = false;
+                }
+                if(!fechaOk) return false;
+                if(comparativoSelectedAgencies.length > 0 && !comparativoSelectedAgencies.includes(d.AGENCIAS)) return false;
+                return true;
+            });
+        }
+        
+        function actualizarMesesDisponiblesEnSelects(dataComparativo) {
+            const mesesSet = new Set();
+            dataComparativo.forEach(d => {
+                let f = parseFecha(d.FECHA_EMISION);
+                if(f) mesesSet.add(`${f.getFullYear()}-${(f.getMonth()+1).toString().padStart(2,'0')}`);
+            });
+            let meses = Array.from(mesesSet).sort();
+            const selectInicio = document.getElementById('comparativoMesInicio');
+            const selectFin = document.getElementById('comparativoMesFin');
+            if(!selectInicio) return;
+            let oldInicio = selectInicio.value;
+            let oldFin = selectFin.value;
+            selectInicio.innerHTML = '<option value="">-- SELECCIONAR --</option>';
+            selectFin.innerHTML = '<option value="">-- SELECCIONAR --</option>';
+            meses.forEach(m => {
+                const nombreMes = formatearNombreMesMayus(m);
+                selectInicio.innerHTML += `<option value="${m}">${nombreMes}</option>`;
+                selectFin.innerHTML += `<option value="${m}">${nombreMes}</option>`;
+            });
+            if(meses.length === 0) return;
+            let nuevoInicio = meses.includes(oldInicio) ? oldInicio : null;
+            let nuevoFin = meses.includes(oldFin) ? oldFin : null;
+            if(!nuevoInicio && meses.length >= 2) nuevoInicio = meses[meses.length-2];
+            if(!nuevoFin && meses.length >= 1) nuevoFin = meses[meses.length-1];
+            if(meses.length === 1) { nuevoInicio = nuevoFin = meses[0]; }
+            selectInicio.value = nuevoInicio || '';
+            selectFin.value = nuevoFin || '';
+            if(nuevoInicio) document.getElementById('thMes1').innerText = formatearNombreMesMayus(nuevoInicio);
+            if(nuevoFin) document.getElementById('thMes2').innerText = formatearNombreMesMayus(nuevoFin);
+        }
+        
+        function renderComparativo() {
+            if(!comparativoActivo) {
+                // Mostrar mensaje de espera
+                document.getElementById('comparativoCards').innerHTML = '<div class="status-msg">Los filtros están deshabilitados. Haga clic en "ACTIVAR COMPARACIÓN" para comenzar.</div>';
+                document.getElementById('tbodyComparativoProductos').innerHTML = '<tr><td colspan="4">--</td></tr>';
+                if(chartComparativo) chartComparativo.destroy();
+                return;
+            }
+            const dataComparativo = obtenerDataParaComparativo();
+            actualizarMesesDisponiblesEnSelects(dataComparativo);
+            const mesInicioStr = document.getElementById('comparativoMesInicio').value;
+            const mesFinStr = document.getElementById('comparativoMesFin').value;
+            if(!mesInicioStr || !mesFinStr) {
+                document.getElementById('comparativoCards').innerHTML = '<div class="status-msg">Seleccione ambos meses para comparar</div>';
+                document.getElementById('tbodyComparativoProductos').innerHTML = '<tr><td colspan="4">Seleccione dos meses</td></tr>';
+                if(chartComparativo) chartComparativo.destroy();
+                return;
+            }
+            renderComparacion(dataComparativo, mesInicioStr, mesFinStr);
+        }
+        
+        function formatearNombreMesMayus(ym) {
+            if(!ym) return '';
+            const [year, month] = ym.split('-');
+            const fecha = new Date(parseInt(year), parseInt(month)-1, 1);
+            const nombre = fecha.toLocaleString('es', { month: 'long', year: 'numeric' });
+            return nombre.toUpperCase();
+        }
+        
+        function renderComparacion(data, mesInicioStr, mesFinStr) {
+            if(!mesInicioStr || !mesFinStr) return;
+            const dataInicio = data.filter(d => {
+                let f = parseFecha(d.FECHA_EMISION);
+                if(!f) return false;
+                return `${f.getFullYear()}-${(f.getMonth()+1).toString().padStart(2,'0')}` === mesInicioStr;
+            });
+            const dataFin = data.filter(d => {
+                let f = parseFecha(d.FECHA_EMISION);
+                if(!f) return false;
+                return `${f.getFullYear()}-${(f.getMonth()+1).toString().padStart(2,'0')}` === mesFinStr;
+            });
+            
+            const metrics = (d) => {
+                let nap = d.reduce((s,item)=>s+item.NAP_CALC,0);
+                let polizas = d.length;
+                let activas = d.filter(item=>item.ESTATUS && item.ESTATUS.toUpperCase()==='ACTIVE').length;
+                let persistencia = polizas ? (activas/polizas)*100 : 0;
+                return { nap, polizas, activas, persistencia };
+            };
+            const m1 = metrics(dataInicio);
+            const m2 = metrics(dataFin);
+            
+            const cardsDiv = document.getElementById('comparativoCards');
+            cardsDiv.innerHTML = `
+                <div class="comparativo-card"><h4>${formatearNombreMesMayus(mesInicioStr)}</h4><div class="valor">$${m1.nap.toLocaleString(undefined,{minFractionDigits:2})}</div><div>NAP</div><div class="small-text">${m1.polizas} pólizas | Persistencia ${m1.persistencia.toFixed(1)}%</div></div>
+                <div class="comparativo-card"><h4>${formatearNombreMesMayus(mesFinStr)}</h4><div class="valor">$${m2.nap.toLocaleString(undefined,{minFractionDigits:2})}</div><div>NAP</div><div class="small-text">${m2.polizas} pólizas | Persistencia ${m2.persistencia.toFixed(1)}%</div></div>
+                <div class="comparativo-card"><h4>VARIACIÓN</h4><div class="valor ${m2.nap >= m1.nap ? 'variacion-positiva' : 'variacion-negativa'}">${((m2.nap - m1.nap)/m1.nap*100).toFixed(1)}%</div><div>NAP</div><div class="small-text">Pólizas: ${((m2.polizas - m1.polizas)/m1.polizas*100).toFixed(1)}%</div></div>
+            `;
+            
+            const prodMap = new Map();
+            dataInicio.forEach(d => { if(d.PRODUCTO) prodMap.set(d.PRODUCTO, { napInicio: (prodMap.get(d.PRODUCTO)?.napInicio||0) + d.NAP_CALC, napFin: prodMap.get(d.PRODUCTO)?.napFin||0 }); });
+            dataFin.forEach(d => { if(d.PRODUCTO) prodMap.set(d.PRODUCTO, { napInicio: prodMap.get(d.PRODUCTO)?.napInicio||0, napFin: (prodMap.get(d.PRODUCTO)?.napFin||0) + d.NAP_CALC }); });
+            
+            const productosArray = Array.from(prodMap.entries()).map(([prod, vals]) => ({ producto: prod, napInicio: vals.napInicio, napFin: vals.napFin }));
+            productosArray.sort((a,b) => Math.max(b.napInicio, b.napFin) - Math.max(a.napInicio, a.napFin));
+            const topProductos = productosArray.slice(0,10);
+            
+            const tbody = document.getElementById('tbodyComparativoProductos');
+            if(topProductos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4">No hay productos en los períodos seleccionados</td></tr>';
+            } else {
+                tbody.innerHTML = topProductos.map(p => {
+                    let variacion = p.napInicio ? ((p.napFin - p.napInicio)/p.napInicio*100).toFixed(1) : (p.napFin ? 100 : 0);
+                    let claseVar = variacion >= 0 ? 'variacion-positiva' : 'variacion-negativa';
+                    return `<tr>
+                        <td class="producto-nombre">${escapeHtml(p.producto)}</td>
+                        <td>$${p.napInicio.toLocaleString(undefined,{minFractionDigits:2})}</td>
+                        <td>$${p.napFin.toLocaleString(undefined,{minFractionDigits:2})}</td>
+                        <td class="${claseVar}">${variacion}%</td>
+                    </tr>`;
+                }).join('');
+            }
+            
+            if(chartComparativo) chartComparativo.destroy();
+            const ctx = document.getElementById('chartComparativoMeses').getContext('2d');
+            chartComparativo = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [formatearNombreMesMayus(mesInicioStr), formatearNombreMesMayus(mesFinStr)],
+                    datasets: [{ label: 'NAP', data: [m1.nap, m2.nap], backgroundColor: ['#0d2b45', '#d4af37'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top' } } }
+            });
+        }
+        
+        function inicializarComparativoAgencias() {
+            comparativoAgenciasDisponibles = [...new Set(dataGlobal.map(i=>i.AGENCIAS))].filter(Boolean).sort();
+            const container = document.getElementById('comparativoAgenciaDropdown');
+            if(!container) return;
+            container.innerHTML = '';
+            comparativoSelectedAgencies = []; // todas
+            
+            comparativoAgenciasDisponibles.forEach(ag => {
+                let div = document.createElement('div'); div.className = 'multi-select-option';
+                let chk = document.createElement('input'); chk.type = 'checkbox'; chk.value = ag; chk.id = `comp_agencia_${ag.replace(/\s/g,'_')}`;
+                chk.checked = false;
+                let lbl = document.createElement('label'); lbl.htmlFor = chk.id; lbl.textContent = ag;
+                chk.addEventListener('change', (e) => {
+                    if(!comparativoActivo) return;
+                    if(e.target.checked) {
+                        if(!comparativoSelectedAgencies.includes(ag)) comparativoSelectedAgencies.push(ag);
+                    } else {
+                        let idx = comparativoSelectedAgencies.indexOf(ag);
+                        if(idx !== -1) comparativoSelectedAgencies.splice(idx,1);
+                    }
+                    actualizarVistaComparativoAgencias();
+                    renderComparativo();
+                });
+                div.appendChild(chk); div.appendChild(lbl);
+                container.appendChild(div);
+            });
+            actualizarVistaComparativoAgencias();
+            
+            let wrapper = document.getElementById('comparativoAgenciaMultiSelect');
+            let trigger = wrapper.querySelector('.multi-select-trigger');
+            trigger.addEventListener('click', (e) => { e.stopPropagation(); if(comparativoActivo) container.classList.toggle('show'); });
+            document.addEventListener('click', (e) => { if(!trigger.contains(e.target) && !container.contains(e.target)) container.classList.remove('show'); });
+        }
+        
+        function actualizarVistaComparativoAgencias() {
+            let span = document.getElementById('comparativoAgenciaSelectedText');
+            if(comparativoSelectedAgencies.length === 0) span.innerText = 'Todas las agencias';
+            else if(comparativoSelectedAgencies.length === 1) span.innerText = comparativoSelectedAgencies[0];
+            else span.innerText = `${comparativoSelectedAgencies.length} agencias`;
+            comparativoAgenciasDisponibles.forEach(ag => {
+                let chk = document.querySelector(`#comp_agencia_${ag.replace(/\s/g,'_')}`);
+                if(chk) chk.checked = comparativoSelectedAgencies.includes(ag);
+            });
+        }
+        
+        function habilitarComparativo() {
+            comparativoActivo = true;
+            // Habilitar controles visualmente
+            document.getElementById('comparativoMesInicio').disabled = false;
+            document.getElementById('comparativoMesFin').disabled = false;
+            document.getElementById('groupAgenciaComparativo').classList.remove('disabled');
+            document.getElementById('btnLimpiarComparativo').style.display = 'inline-block';
+            document.getElementById('btnActivarComparativo').style.display = 'none';
+            // Recargar datos y renderizar
+            renderComparativo();
+            // Agregar event listeners a los selects si aún no los tienen
+            const selInicio = document.getElementById('comparativoMesInicio');
+            const selFin = document.getElementById('comparativoMesFin');
+            if(!selInicio.hasAttribute('data-listener')) {
+                selInicio.addEventListener('change', () => { if(comparativoActivo) renderComparativo(); });
+                selFin.addEventListener('change', () => { if(comparativoActivo) renderComparativo(); });
+                selInicio.setAttribute('data-listener','true');
+                selFin.setAttribute('data-listener','true');
+            }
+        }
+        
+        function limpiarFiltrosComparativo() {
+            if(!comparativoActivo) return;
+            // Resetear agencias a todas
+            comparativoSelectedAgencies = [];
+            actualizarVistaComparativoAgencias();
+            // Resetear meses a los dos más recientes disponibles según datos actuales
+            const dataTemp = obtenerDataParaComparativo();
+            actualizarMesesDisponiblesEnSelects(dataTemp);
+            renderComparativo();
+        }
+        
+        // ========== FIN COMPARATIVO ==========
+
         function initAutoLoad() {
             Papa.parse(URL_SHEET, {
                 download: true, header: true, skipEmptyLines: true,
@@ -335,6 +633,24 @@
             construirMultiSelect('estatus', estatusDisponibles, document.getElementById('estatusDropdown'), selectedStatuses, actualizarVistaEstatus, () => { showAllAgents = false; procesarYFiltrar(); });
             construirMultiSelect('agencia', agenciasDisponibles, document.getElementById('agenciaDropdown'), selectedAgencies, actualizarVistaAgencias, () => { showAllAgents = false; procesarYFiltrar(); });
             configurarBotonesTabla();
+            
+            // Inicializar comparativo (controles deshabilitados)
+            inicializarComparativoAgencias();
+            document.getElementById('comparativoMesInicio').disabled = true;
+            document.getElementById('comparativoMesFin').disabled = true;
+            document.getElementById('groupAgenciaComparativo').classList.add('disabled');
+            document.getElementById('btnActivarComparativo').addEventListener('click', habilitarComparativo);
+            document.getElementById('btnLimpiarComparativo').addEventListener('click', limpiarFiltrosComparativo);
+            
+            // Listener del rango de fechas global para actualizar comparativo si está activo
+            if(dateRangePicker) {
+                dateRangePicker.config.onChange = () => {
+                    showAllAgents = false;
+                    procesarYFiltrar();
+                    if(comparativoActivo) renderComparativo();
+                };
+            }
+            
             procesarYFiltrar();
         }
 
@@ -342,7 +658,6 @@
             const agentes = [...new Set(dataGlobal.map(i=>i.AGENTE))].filter(Boolean).sort();
             fillSelect('selAgente', agentes);
             agenciasDisponibles = [...new Set(dataGlobal.map(i=>i.AGENCIAS))].filter(Boolean).sort();
-            // Añadir las agencias que tienen meta pero quizás no aparecen en datos
             Object.keys(METAS_AGENCIAS).forEach(ag => { if(!agenciasDisponibles.includes(ag)) agenciasDisponibles.push(ag); });
             agenciasDisponibles.sort();
             selectedAgencies = [];
@@ -419,7 +734,7 @@
         function inicializarDateRangePicker() {
             dateRangePicker = flatpickr("#dateRange", {
                 mode: "range", dateFormat: "m/d/Y", locale: "es", allowInput: false,
-                onChange: () => { showAllAgents = false; procesarYFiltrar(); },
+                onChange: () => { showAllAgents = false; procesarYFiltrar(); if(comparativoActivo) renderComparativo(); },
                 onReady: (_, __, inst) => { if(minFechaGlobal && maxFechaGlobal) inst.setDate([minFechaGlobal, maxFechaGlobal]); }
             });
         }
@@ -431,7 +746,9 @@
                 actualizarVistaProductos(); actualizarVistaEstatus(); actualizarVistaAgencias();
                 if(dateRangePicker && minFechaGlobal && maxFechaGlobal) dateRangePicker.setDate([minFechaGlobal, maxFechaGlobal]);
                 showAllAgents = false;
+                // No afectamos el comparativo activo ni sus filtros
                 procesarYFiltrar();
+                if(comparativoActivo) renderComparativo();
             });
         }
 
@@ -531,7 +848,7 @@
             document.getElementById('kpiTopEstados').innerHTML = top3.length ? top3.map(([e,v],i)=>`${i+1}. ${e}: ${v.toLocaleString(undefined,{minFractionDigits:2})}`).join('<br>') : 'Sin datos';
         }
 
-        // Tabla de Alcance de Metas por Agencia
+        // ========== FUNCIONES DE METAS Y TABLAS ==========
         function dibujarTablaMetasAgencias(data) {
             const tbody = document.getElementById('tablaMetasBody');
             if(!tbody) return;
@@ -544,36 +861,24 @@
                 startDate = endDate = dateRangePicker.selectedDates[0];
             }
             
-            // 1. Calcular NAP individual por agencia (sin consolidar)
-            const napIndividual = new Map(); // agencia -> total NAP
+            const napIndividual = new Map();
             data.forEach(d => {
                 const ag = d.AGENCIAS;
-                if(ag && METAS_AGENCIAS[ag]) {
-                    napIndividual.set(ag, (napIndividual.get(ag) || 0) + d.NAP_CALC);
-                }
+                if(ag && METAS_AGENCIAS[ag]) napIndividual.set(ag, (napIndividual.get(ag) || 0) + d.NAP_CALC);
             });
             
-            // 2. Calcular NAP consolidado para las agencias principales (PLATINIUM y LOYAL PLUS)
             const napConsolidado = new Map();
             for(let [ag, total] of napIndividual.entries()) {
                 const principal = AGENCIA_PRINCIPAL[ag];
-                if(principal) {
-                    napConsolidado.set(principal, (napConsolidado.get(principal) || 0) + total);
-                } else {
-                    if(!napConsolidado.has(ag)) napConsolidado.set(ag, 0);
-                    napConsolidado.set(ag, napConsolidado.get(ag) + total);
-                }
+                if(principal) napConsolidado.set(principal, (napConsolidado.get(principal) || 0) + total);
+                else napConsolidado.set(ag, (napConsolidado.get(ag) || 0) + total);
             }
             for(let principal of ["PLATINIUM", "LOYAL PLUS"]) {
-                if(!napConsolidado.has(principal)) {
-                    napConsolidado.set(principal, napIndividual.get(principal) || 0);
-                }
+                if(!napConsolidado.has(principal)) napConsolidado.set(principal, napIndividual.get(principal) || 0);
             }
             
-            // 3. Calcular semanas cumplidas (individual y consolidado)
             const semanasInfo = new Map();
             const napPorAgenciaSemana = new Map();
-            
             data.forEach(d => {
                 const ag = d.AGENCIAS;
                 if(!ag || !METAS_AGENCIAS[ag]) return;
@@ -592,23 +897,16 @@
                 napPorAgenciaSemana.set(key, (napPorAgenciaSemana.get(key) || 0) + d.NAP_CALC);
             });
             
-            // 4. Para cada agencia con meta, determinar su NAP a mostrar y semanas cumplidas
             const agenciasMeta = Object.keys(METAS_AGENCIAS);
             const resultados = [];
-            
             for(let agencia of agenciasMeta) {
                 const meta = METAS_AGENCIAS[agencia];
                 let napTotal = 0;
                 let semanasCumplidas = [];
                 let sumaPctSemanal = 0;
                 let semanasEnRango = 0;
-                
                 const esPrincipal = (agencia === "PLATINIUM" || agencia === "LOYAL PLUS");
-                if(esPrincipal) {
-                    napTotal = napConsolidado.get(agencia) || 0;
-                } else {
-                    napTotal = napIndividual.get(agencia) || 0;
-                }
+                napTotal = esPrincipal ? (napConsolidado.get(agencia) || 0) : (napIndividual.get(agencia) || 0);
                 
                 if(esPrincipal) {
                     const subagencias = Object.entries(AGENCIA_PRINCIPAL).filter(([sub, princ]) => princ === agencia).map(([sub]) => sub);
@@ -620,14 +918,10 @@
                         if(!semanaInRange) continue;
                         semanasEnRango++;
                         let napSemana = 0;
-                        for(let ag of agenciasAConsiderar) {
-                            napSemana += napPorAgenciaSemana.get(`${ag}|${semKey}`) || 0;
-                        }
+                        for(let ag of agenciasAConsiderar) napSemana += napPorAgenciaSemana.get(`${ag}|${semKey}`) || 0;
                         const pctSemana = meta.semanal > 0 ? (napSemana / meta.semanal) * 100 : 0;
                         sumaPctSemanal += pctSemana;
-                        if(pctSemana >= 100) {
-                            semanasCumplidas.push(`S${semInfo.numero}`);
-                        }
+                        if(pctSemana >= 100) semanasCumplidas.push(`S${semInfo.numero}`);
                     }
                 } else {
                     for(let [semKey, semInfo] of semanasInfo.entries()) {
@@ -639,50 +933,20 @@
                         const napSemana = napPorAgenciaSemana.get(`${agencia}|${semKey}`) || 0;
                         const pctSemana = meta.semanal > 0 ? (napSemana / meta.semanal) * 100 : 0;
                         sumaPctSemanal += pctSemana;
-                        if(pctSemana >= 100) {
-                            semanasCumplidas.push(`S${semInfo.numero}`);
-                        }
+                        if(pctSemana >= 100) semanasCumplidas.push(`S${semInfo.numero}`);
                     }
                 }
-                
                 const promedioSemanal = semanasEnRango > 0 ? sumaPctSemanal / semanasEnRango : 0;
                 const pctMes = meta.mensual > 0 ? (napTotal / meta.mensual) * 100 : 0;
                 const claseMes = pctMes >= 100 ? 'cumplimiento-alta' : (pctMes >= 70 ? 'cumplimiento-media' : 'cumplimiento-baja');
                 const semanasTexto = semanasCumplidas.length ? semanasCumplidas.join(', ') : 'Ninguna';
-                
-                resultados.push({
-                    agencia,
-                    napTotal,
-                    metaSemanal: meta.semanal,
-                    promedioSemanal,
-                    semanasTexto,
-                    metaMensual: meta.mensual,
-                    pctMes,
-                    claseMes
-                });
+                resultados.push({ agencia, napTotal, metaSemanal: meta.semanal, promedioSemanal, semanasTexto, metaMensual: meta.mensual, pctMes, claseMes });
             }
-            
-            // Ordenar de mayor a menor por napTotal
             resultados.sort((a,b) => b.napTotal - a.napTotal);
-            
-            if(resultados.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7">No hay metas configuradas</td></tr>';
-            } else {
-                tbody.innerHTML = resultados.map(r => `
-                    <tr>
-                        <td><strong>${escapeHtml(r.agencia)}</strong></td>
-                        <td>$${r.napTotal.toLocaleString(undefined,{minFractionDigits:2})}</td>
-                        <td>$${r.metaSemanal.toLocaleString()}</td>
-                        <td>${r.promedioSemanal.toFixed(1)}%</td>
-                        <td class="semanas-cumplidas">${r.semanasTexto}</td>
-                        <td>$${r.metaMensual.toLocaleString()}</td>
-                        <td class="${r.claseMes}">${r.pctMes.toFixed(1)}%</td>
-                    </tr>
-                `).join('');
-            }
+            if(resultados.length === 0) tbody.innerHTML = '<tr><td colspan="7">No hay metas configuradas</td></tr>';
+            else tbody.innerHTML = resultados.map(r => `<tr><td><strong>${escapeHtml(r.agencia)}</strong></td><td>$${r.napTotal.toLocaleString(undefined,{minFractionDigits:2})}</td><td>$${r.metaSemanal.toLocaleString()}</td><td>${r.promedioSemanal.toFixed(1)}%</td><td class="semanas-cumplidas">${r.semanasTexto}</td><td>$${r.metaMensual.toLocaleString()}</td><td class="${r.claseMes}">${r.pctMes.toFixed(1)}%</td></tr>`).join('');
         }
-
-        // Funciones auxiliares de semana
+        
         function getWeekNumber(date) {
             const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
             const dayNum = d.getUTCDay() || 7;
@@ -696,7 +960,7 @@
             const diff = d.getDate() - day + (day === 0 ? -6 : 1);
             return new Date(d.setDate(diff));
         }
-
+        
         function dibujarGraficos(data) {
             let diasMap = {};
             data.forEach(d=>{ let f = parseFecha(d.FECHA_EMISION); if(f) diasMap[formatearFechaKey(f)] = (diasMap[formatearFechaKey(f)]||0)+d.NAP_CALC; });
@@ -708,7 +972,7 @@
             chartD = new Chart(document.getElementById('chartDias'), { type:'line', data:{ labels:labelsDias, datasets:[{ label:'NAP', data:valuesDias, borderColor:'#d4af37', tension:0.3, fill:true, backgroundColor:'rgba(212,175,55,0.1)' }] }, options:{ responsive:true, maintainAspectRatio:true } });
             chartM = new Chart(document.getElementById('chartMeses'), { type:'bar', data:{ labels:labelsMeses, datasets:[{ label:'NAP Total', data:valuesMeses, backgroundColor:'#0d2b45' }] }, options:{ responsive:true, maintainAspectRatio:true } });
         }
-
+        
         function dibujarTablaAgentes(data) {
             let tbody = document.getElementById('tablaAgentesBody');
             tbody.innerHTML = '';
@@ -724,22 +988,14 @@
             });
             let mesesUnicos = getUniqueMonths(data);
             let metaTotal = META_MENSUAL_AGENTE * (mesesUnicos || 1);
-            let agentesArray = Array.from(agentesMap.entries()).map(([nom,dat]) => ({
-                nombre: nom, idAgente: dat.id, totalNap: dat.totalNap, totalPolizas: dat.polizas.length,
-                activas: dat.activas, persistencia: dat.polizas.length>0 ? (dat.activas/dat.polizas.length)*100 : 0,
-                polizas: dat.polizas
-            })).sort((a,b)=>b.totalNap - a.totalNap);
+            let agentesArray = Array.from(agentesMap.entries()).map(([nom,dat]) => ({ nombre: nom, idAgente: dat.id, totalNap: dat.totalNap, totalPolizas: dat.polizas.length, activas: dat.activas, persistencia: dat.polizas.length>0 ? (dat.activas/dat.polizas.length)*100 : 0, polizas: dat.polizas })).sort((a,b)=>b.totalNap - a.totalNap);
             let mostrar = showAllAgents ? agentesArray : agentesArray.slice(0,10);
             mostrar.forEach((ag,idx) => {
                 let rowId = `agente_${idx}_${Date.now()}_${Math.random()}`;
                 let cumple = ag.totalNap >= metaTotal;
                 let porcMeta = metaTotal>0 ? (ag.totalNap/metaTotal)*100 : 0;
                 let tr = document.createElement('tr');
-                tr.innerHTML = `<td class="expand-icon" onclick="toggleDetalle('${rowId}')">▶</td>
-                                 <td><strong>${escapeHtml(ag.nombre)}</strong></td>
-                                 <td>$${ag.totalNap.toLocaleString(undefined,{minFractionDigits:2})}</td>
-                                 <td>${ag.persistencia.toFixed(1)}% (${ag.activas}/${ag.totalPolizas})</td>
-                                 <td class="${cumple ? 'meta-cumplida' : 'meta-no-cumplida'}">${cumple ? '✓ Cumplida' : '✗ No cumplida'} ($${metaTotal.toLocaleString()} | ${porcMeta.toFixed(1)}%)</td>`;
+                tr.innerHTML = `<td class="expand-icon" onclick="toggleDetalle('${rowId}')">▶</td><td><strong>${escapeHtml(ag.nombre)}</strong></td><td>$${ag.totalNap.toLocaleString(undefined,{minFractionDigits:2})}</td><td>${ag.persistencia.toFixed(1)}% (${ag.activas}/${ag.totalPolizas})</td><td class="${cumple ? 'meta-cumplida' : 'meta-no-cumplida'}">${cumple ? '✓ Cumplida' : '✗ No cumplida'} ($${metaTotal.toLocaleString()} | ${porcMeta.toFixed(1)}%)</td>`;
                 tbody.appendChild(tr);
                 let trDetail = document.createElement('tr'); trDetail.className = 'detail-row'; trDetail.id = rowId;
                 trDetail.innerHTML = `<td colspan="5"><div style="padding:10px; background:#f8f9fa;"><strong>📋 Detalle de ${escapeHtml(ag.nombre)}</strong><br><span style="font-size:0.7rem;">ID Producer: ${escapeHtml(ag.idAgente)}</span><table class="detail-table" style="margin-top:8px;"><thead><tr><th>Póliza</th><th>Estado</th><th>Producto</th><th>NAP</th><th>Estatus</th><th>Fecha Emisión</th></tr></thead><tbody>${ag.polizas.map(p => `<tr><td>${escapeHtml(p.N_POLIZA||'N/A')}</td><td>${escapeHtml(p.ESTADO||'N/A')}</td><td>${escapeHtml(p.PRODUCTO||'N/A')}</td><td>$${(p.NAP_CALC).toLocaleString(undefined,{minFractionDigits:2})}</td><td style="color:${p.ESTATUS==='ACTIVE'?'green':'red'}">${escapeHtml(p.ESTATUS||'N/A')}</td><td>${escapeHtml(p.FECHA_EMISION||'N/A')}</td></tr>`).join('')}</tbody></table></div></td>`;
@@ -747,7 +1003,7 @@
             });
             if(!agentesArray.length) tbody.innerHTML = '<tr><td colspan="5">Sin datos</td></tr>';
         }
-
+        
         function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
         window.toggleDetalle = function(rowId) {
             let el = document.getElementById(rowId);
