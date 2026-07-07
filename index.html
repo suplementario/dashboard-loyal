@@ -63,7 +63,8 @@
         .multi-select-option input { width: 18px; height: 18px; margin: 0; cursor: pointer; }
         .multi-select-option label { flex: 1; cursor: pointer; font-weight: normal; color: #333; }
         .comparativo-control.disabled .multi-select-trigger,
-        .comparativo-control.disabled select {
+        .comparativo-control.disabled select,
+        .comparativo-control.disabled input {
             opacity: 0.6;
             pointer-events: none;
             background-color: #e9ecef;
@@ -99,6 +100,12 @@
         .cumplimiento-media { color: #ed6c02; font-weight: bold; }
         .cumplimiento-baja { color: #c62828; font-weight: bold; }
         .semanas-cumplidas { font-size: 0.7rem; color: #0d2b45; font-weight: normal; }
+        /* Estilo para resaltar la agencia con mayor logro */
+        .mayor-logro {
+            background-color: #d4af37 !important;
+            color: #0d2b45 !important;
+            font-weight: bold;
+        }
         .table-container { background: var(--blanco); padding: 12px; border-radius: 12px; overflow-x: auto; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
         .table-container h3 { text-transform: uppercase; }
         table { width: 100%; border-collapse: collapse; font-size: 0.75rem; min-width: 500px; }
@@ -119,7 +126,7 @@
         .comparativo-container h3 { text-transform: uppercase; margin: 0 0 16px 0; font-size: 1rem; color: var(--azul-loyal); border-left: 4px solid var(--dorado-loyal); padding-left: 12px; }
         .comparativo-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; }
         .comparativo-selector { display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap; }
-        .comparativo-selector .filter-group { min-width: 150px; }
+        .comparativo-selector .filter-group { min-width: 180px; }
         .comparativo-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
         .comparativo-card { background: #f8f9fa; border-radius: 12px; padding: 12px; text-align: center; border-left: 4px solid var(--dorado-loyal); }
         .comparativo-card h4 { margin: 0 0 8px 0; font-size: 0.8rem; color: var(--azul-loyal); text-transform: uppercase; }
@@ -202,18 +209,18 @@
         <div class="small-text" style="margin-top: 8px;">*Meta mensual ajustada según el número de meses en el rango seleccionado.</div>
     </div>
 
-    <!-- Módulo Comparativo Mes a Mes -->
+    <!-- Módulo Comparativo por Rangos de Fechas -->
     <div class="comparativo-container">
-        <h3>📊 COMPARATIVO MES A MES</h3>
+        <h3>📊 COMPARATIVO POR PERÍODOS</h3>
         <div class="comparativo-header">
             <div class="comparativo-selector">
-                <div class="filter-group comparativo-control" id="groupMesInicio">
-                    <label>📅 MES INICIAL:</label>
-                    <select id="comparativoMesInicio" disabled></select>
+                <div class="filter-group comparativo-control" id="groupRango1">
+                    <label>📅 PERÍODO 1:</label>
+                    <input type="text" id="comparativoRango1" class="date-range-input" placeholder="Selecciona rango" disabled>
                 </div>
-                <div class="filter-group comparativo-control" id="groupMesFin">
-                    <label>📅 MES FINAL:</label>
-                    <select id="comparativoMesFin" disabled></select>
+                <div class="filter-group comparativo-control" id="groupRango2">
+                    <label>📅 PERÍODO 2:</label>
+                    <input type="text" id="comparativoRango2" class="date-range-input" placeholder="Selecciona rango" disabled>
                 </div>
                 <div class="filter-group comparativo-control" id="groupAgenciaComparativo">
                     <label>🏢 FILTRAR AGENCIAS:</label>
@@ -232,12 +239,12 @@
         </div>
         <div style="overflow-x: auto;">
             <table class="tabla-productos-compare" id="tablaComparativoProductos">
-                <thead><tr><th>PRODUCTO</th><th id="thMes1">NAP MES 1</th><th id="thMes2">NAP MES 2</th><th>VARIACIÓN (%)</th></thead>
+                <thead><tr><th>PRODUCTO</th><th id="thPeriodo1">NAP PERÍODO 1</th><th id="thPeriodo2">NAP PERÍODO 2</th><th>VARIACIÓN (%)</th></thead>
                 <tbody id="tbodyComparativoProductos"><tr><td colspan="4">--</td></tr>
                 </tbody>
             </table>
         </div>
-        <div class="chart-box" style="margin-top:20px;"><h3>COMPARATIVA NAP MENSUAL</h3><canvas id="chartComparativoMeses" style="max-height:200px;"></canvas></div>
+        <div class="chart-box" style="margin-top:20px;"><h3>COMPARATIVA NAP POR PERÍODO</h3><canvas id="chartComparativoMeses" style="max-height:200px;"></canvas></div>
     </div>
 
     <div class="charts-grid">
@@ -281,6 +288,7 @@
         let dataGlobal = [];
         let chartD = null, chartM = null, chartComparativo = null;
         let dateRangePicker = null;
+        let comparativoPicker1 = null, comparativoPicker2 = null;
         let minFechaGlobal = null, maxFechaGlobal = null;
         
         let productosDisponibles = [];
@@ -363,16 +371,13 @@
 
         function parseFecha(fechaStr) {
             if (!fechaStr) return null;
-            // Intentar formato dd/mm/aaaa o mm/dd/aaaa según el dato real. Se probarán ambos.
             let partes = fechaStr.split('/');
             if (partes.length === 3) {
-                // Suponemos que es mm/dd/aaaa (formato americano) porque es lo común en estos CSVs
                 let mes = parseInt(partes[0],10)-1;
                 let dia = parseInt(partes[1],10);
                 let anio = parseInt(partes[2],10);
                 let fecha = new Date(anio, mes, dia);
                 if (!isNaN(fecha.getTime())) return fecha;
-                // Si falla, probar dd/mm/aaaa
                 mes = parseInt(partes[1],10)-1;
                 dia = parseInt(partes[0],10);
                 fecha = new Date(anio, mes, dia);
@@ -394,37 +399,13 @@
             return dataGlobal.slice();
         }
         
-        function actualizarMesesDisponiblesEnSelects(dataComparativo) {
-            const mesesSet = new Set();
-            dataComparativo.forEach(d => {
-                let f = parseFecha(d.FECHA_EMISION);
-                if(f) mesesSet.add(`${f.getFullYear()}-${(f.getMonth()+1).toString().padStart(2,'0')}`);
-            });
-            let meses = Array.from(mesesSet).sort();
-            const selectInicio = document.getElementById('comparativoMesInicio');
-            const selectFin = document.getElementById('comparativoMesFin');
-            if(!selectInicio) return;
-            let oldInicio = selectInicio.value;
-            let oldFin = selectFin.value;
-            selectInicio.innerHTML = '<option value="">-- SELECCIONAR --</option>';
-            selectFin.innerHTML = '<option value="">-- SELECCIONAR --</option>';
-            meses.forEach(m => {
-                const nombreMes = formatearNombreMesMayus(m);
-                selectInicio.innerHTML += `<option value="${m}">${nombreMes}</option>`;
-                selectFin.innerHTML += `<option value="${m}">${nombreMes}</option>`;
-            });
-            if(meses.length === 0) return;
-            let nuevoInicio = meses.includes(oldInicio) ? oldInicio : null;
-            let nuevoFin = meses.includes(oldFin) ? oldFin : null;
-            if(!nuevoInicio && meses.length >= 2) nuevoInicio = meses[meses.length-2];
-            if(!nuevoFin && meses.length >= 1) nuevoFin = meses[meses.length-1];
-            if(meses.length === 1) { nuevoInicio = nuevoFin = meses[0]; }
-            selectInicio.value = nuevoInicio || '';
-            selectFin.value = nuevoFin || '';
-            if(nuevoInicio) document.getElementById('thMes1').innerText = formatearNombreMesMayus(nuevoInicio);
-            if(nuevoFin) document.getElementById('thMes2').innerText = formatearNombreMesMayus(nuevoFin);
+        // Función para formatear un rango de fechas
+        function formatearRango(inicio, fin) {
+            if (!inicio || !fin) return '';
+            const opts = { day: '2-digit', month: '2-digit', year: 'numeric' };
+            return `${inicio.toLocaleDateString('es', opts)} - ${fin.toLocaleDateString('es', opts)}`;
         }
-        
+
         function renderComparativo() {
             if(!comparativoActivo) {
                 document.getElementById('comparativoCards').innerHTML = '<div class="status-msg">Los filtros están deshabilitados. Haga clic en "ACTIVAR COMPARACIÓN" para comenzar.</div>';
@@ -432,44 +413,54 @@
                 if(chartComparativo) chartComparativo.destroy();
                 return;
             }
-            const dataComparativo = obtenerDataParaComparativo();
-            actualizarMesesDisponiblesEnSelects(dataComparativo);
-            const mesInicioStr = document.getElementById('comparativoMesInicio').value;
-            const mesFinStr = document.getElementById('comparativoMesFin').value;
-            if(!mesInicioStr || !mesFinStr) {
-                document.getElementById('comparativoCards').innerHTML = '<div class="status-msg">Seleccione ambos meses para comparar</div>';
-                document.getElementById('tbodyComparativoProductos').innerHTML = '<tr><td colspan="4">Seleccione dos meses</td></tr>';
+            // Obtener los rangos seleccionados
+            const rango1 = comparativoPicker1 ? comparativoPicker1.selectedDates : [];
+            const rango2 = comparativoPicker2 ? comparativoPicker2.selectedDates : [];
+            
+            if (rango1.length < 2 || rango2.length < 2) {
+                document.getElementById('comparativoCards').innerHTML = '<div class="status-msg">Seleccione un rango de fechas para cada período</div>';
+                document.getElementById('tbodyComparativoProductos').innerHTML = '<tr><td colspan="4">Seleccione dos rangos</td></tr>';
                 if(chartComparativo) chartComparativo.destroy();
                 return;
             }
-            renderComparacion(dataComparativo, mesInicioStr, mesFinStr);
+            
+            const inicio1 = rango1[0];
+            const fin1 = rango1[1];
+            const inicio2 = rango2[0];
+            const fin2 = rango2[1];
+            
+            // Actualizar encabezados
+            document.getElementById('thPeriodo1').innerText = formatearRango(inicio1, fin1);
+            document.getElementById('thPeriodo2').innerText = formatearRango(inicio2, fin2);
+            
+            renderComparacionRangos(inicio1, fin1, inicio2, fin2);
         }
         
-        function formatearNombreMesMayus(ym) {
-            if(!ym) return '';
-            const [year, month] = ym.split('-');
-            const fecha = new Date(parseInt(year), parseInt(month)-1, 1);
-            const nombre = fecha.toLocaleString('es', { month: 'long', year: 'numeric' });
-            return nombre.toUpperCase();
-        }
-        
-        function renderComparacion(data, mesInicioStr, mesFinStr) {
-            if(!mesInicioStr || !mesFinStr) return;
+        function renderComparacionRangos(inicio1, fin1, inicio2, fin2) {
+            const data = obtenerDataParaComparativo();
+            // Filtrar por agencias si se seleccionaron
             let dataFiltrada = data;
             if(comparativoSelectedAgencies.length > 0) {
                 dataFiltrada = data.filter(d => comparativoSelectedAgencies.includes(d.AGENCIAS));
             }
-            const dataInicio = dataFiltrada.filter(d => {
-                let f = parseFecha(d.FECHA_EMISION);
-                if(!f) return false;
-                return `${f.getFullYear()}-${(f.getMonth()+1).toString().padStart(2,'0')}` === mesInicioStr;
-            });
-            const dataFin = dataFiltrada.filter(d => {
-                let f = parseFecha(d.FECHA_EMISION);
-                if(!f) return false;
-                return `${f.getFullYear()}-${(f.getMonth()+1).toString().padStart(2,'0')}` === mesFinStr;
-            });
             
+            // Función para filtrar por rango de fechas
+            function filtrarPorRango(data, inicio, fin) {
+                return data.filter(d => {
+                    let f = parseFecha(d.FECHA_EMISION);
+                    if (!f) return false;
+                    // Normalizar fechas para comparación (ignorar horas)
+                    const fecha = new Date(f.getFullYear(), f.getMonth(), f.getDate());
+                    const start = new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate());
+                    const end = new Date(fin.getFullYear(), fin.getMonth(), fin.getDate());
+                    return fecha >= start && fecha <= end;
+                });
+            }
+            
+            const data1 = filtrarPorRango(dataFiltrada, inicio1, fin1);
+            const data2 = filtrarPorRango(dataFiltrada, inicio2, fin2);
+            
+            // Métricas
             const metrics = (d) => {
                 let nap = d.reduce((s,item)=>s+item.NAP_CALC,0);
                 let polizas = d.length;
@@ -477,22 +468,23 @@
                 let persistencia = polizas ? (activas/polizas)*100 : 0;
                 return { nap, polizas, activas, persistencia };
             };
-            const m1 = metrics(dataInicio);
-            const m2 = metrics(dataFin);
+            const m1 = metrics(data1);
+            const m2 = metrics(data2);
             
             const cardsDiv = document.getElementById('comparativoCards');
             cardsDiv.innerHTML = `
-                <div class="comparativo-card"><h4>${formatearNombreMesMayus(mesInicioStr)}</h4><div class="valor">$${m1.nap.toLocaleString(undefined,{minFractionDigits:2})}</div><div>NAP</div><div class="small-text">${m1.polizas} pólizas | Persistencia ${m1.persistencia.toFixed(1)}%</div></div>
-                <div class="comparativo-card"><h4>${formatearNombreMesMayus(mesFinStr)}</h4><div class="valor">$${m2.nap.toLocaleString(undefined,{minFractionDigits:2})}</div><div>NAP</div><div class="small-text">${m2.polizas} pólizas | Persistencia ${m2.persistencia.toFixed(1)}%</div></div>
+                <div class="comparativo-card"><h4>${formatearRango(inicio1, fin1)}</h4><div class="valor">$${m1.nap.toLocaleString(undefined,{minFractionDigits:2})}</div><div>NAP</div><div class="small-text">${m1.polizas} pólizas | Persistencia ${m1.persistencia.toFixed(1)}%</div></div>
+                <div class="comparativo-card"><h4>${formatearRango(inicio2, fin2)}</h4><div class="valor">$${m2.nap.toLocaleString(undefined,{minFractionDigits:2})}</div><div>NAP</div><div class="small-text">${m2.polizas} pólizas | Persistencia ${m2.persistencia.toFixed(1)}%</div></div>
                 <div class="comparativo-card"><h4>VARIACIÓN</h4><div class="valor ${m2.nap >= m1.nap ? 'variacion-positiva' : 'variacion-negativa'}">${((m2.nap - m1.nap)/m1.nap*100).toFixed(1)}%</div><div>NAP</div><div class="small-text">Pólizas: ${((m2.polizas - m1.polizas)/m1.polizas*100).toFixed(1)}%</div></div>
             `;
             
+            // Productos
             const prodMap = new Map();
-            dataInicio.forEach(d => { if(d.PRODUCTO) prodMap.set(d.PRODUCTO, { napInicio: (prodMap.get(d.PRODUCTO)?.napInicio||0) + d.NAP_CALC, napFin: prodMap.get(d.PRODUCTO)?.napFin||0 }); });
-            dataFin.forEach(d => { if(d.PRODUCTO) prodMap.set(d.PRODUCTO, { napInicio: prodMap.get(d.PRODUCTO)?.napInicio||0, napFin: (prodMap.get(d.PRODUCTO)?.napFin||0) + d.NAP_CALC }); });
+            data1.forEach(d => { if(d.PRODUCTO) prodMap.set(d.PRODUCTO, { nap1: (prodMap.get(d.PRODUCTO)?.nap1||0) + d.NAP_CALC, nap2: prodMap.get(d.PRODUCTO)?.nap2||0 }); });
+            data2.forEach(d => { if(d.PRODUCTO) prodMap.set(d.PRODUCTO, { nap1: prodMap.get(d.PRODUCTO)?.nap1||0, nap2: (prodMap.get(d.PRODUCTO)?.nap2||0) + d.NAP_CALC }); });
             
-            const productosArray = Array.from(prodMap.entries()).map(([prod, vals]) => ({ producto: prod, napInicio: vals.napInicio, napFin: vals.napFin }));
-            productosArray.sort((a,b) => Math.max(b.napInicio, b.napFin) - Math.max(a.napInicio, a.napFin));
+            const productosArray = Array.from(prodMap.entries()).map(([prod, vals]) => ({ producto: prod, nap1: vals.nap1, nap2: vals.nap2 }));
+            productosArray.sort((a,b) => Math.max(b.nap1, b.nap2) - Math.max(a.nap1, a.nap2));
             const topProductos = productosArray.slice(0,10);
             
             const tbody = document.getElementById('tbodyComparativoProductos');
@@ -500,23 +492,24 @@
                 tbody.innerHTML = '<tr><td colspan="4">No hay productos en los períodos seleccionados</td></tr>';
             } else {
                 tbody.innerHTML = topProductos.map(p => {
-                    let variacion = p.napInicio ? ((p.napFin - p.napInicio)/p.napInicio*100).toFixed(1) : (p.napFin ? 100 : 0);
+                    let variacion = p.nap1 ? ((p.nap2 - p.nap1)/p.nap1*100).toFixed(1) : (p.nap2 ? 100 : 0);
                     let claseVar = variacion >= 0 ? 'variacion-positiva' : 'variacion-negativa';
                     return `<tr>
                         <td class="producto-nombre">${escapeHtml(p.producto)}</td>
-                        <td>$${p.napInicio.toLocaleString(undefined,{minFractionDigits:2})}</td>
-                        <td>$${p.napFin.toLocaleString(undefined,{minFractionDigits:2})}</td>
+                        <td>$${p.nap1.toLocaleString(undefined,{minFractionDigits:2})}</td>
+                        <td>$${p.nap2.toLocaleString(undefined,{minFractionDigits:2})}</td>
                         <td class="${claseVar}">${variacion}%</td>
                     </tr>`;
                 }).join('');
             }
             
+            // Gráfico
             if(chartComparativo) chartComparativo.destroy();
             const ctx = document.getElementById('chartComparativoMeses').getContext('2d');
             chartComparativo = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: [formatearNombreMesMayus(mesInicioStr), formatearNombreMesMayus(mesFinStr)],
+                    labels: [formatearRango(inicio1, fin1), formatearRango(inicio2, fin2)],
                     datasets: [{ label: 'NAP', data: [m1.nap, m2.nap], backgroundColor: ['#0d2b45', '#d4af37'] }]
                 },
                 options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top' } } }
@@ -570,30 +563,48 @@
         
         function habilitarComparativo() {
             comparativoActivo = true;
-            document.getElementById('comparativoMesInicio').disabled = false;
-            document.getElementById('comparativoMesFin').disabled = false;
+            // Habilitar inputs
+            document.getElementById('comparativoRango1').disabled = false;
+            document.getElementById('comparativoRango2').disabled = false;
             document.getElementById('groupAgenciaComparativo').classList.remove('disabled');
             document.getElementById('btnLimpiarComparativo').style.display = 'inline-block';
             document.getElementById('btnActivarComparativo').style.display = 'none';
-            const dataTemp = obtenerDataParaComparativo();
-            actualizarMesesDisponiblesEnSelects(dataTemp);
-            renderComparativo();
-            const selInicio = document.getElementById('comparativoMesInicio');
-            const selFin = document.getElementById('comparativoMesFin');
-            if(!selInicio.hasAttribute('data-listener')) {
-                selInicio.addEventListener('change', () => { if(comparativoActivo) renderComparativo(); });
-                selFin.addEventListener('change', () => { if(comparativoActivo) renderComparativo(); });
-                selInicio.setAttribute('data-listener','true');
-                selFin.setAttribute('data-listener','true');
+            
+            // Establecer rangos predeterminados: los últimos 30 días para el período 2 y los 30 días anteriores para el período 1
+            if (maxFechaGlobal && minFechaGlobal) {
+                // Usar el rango global para establecer valores
+                const end2 = new Date(maxFechaGlobal);
+                const start2 = new Date(end2);
+                start2.setDate(start2.getDate() - 29); // 30 días
+                const end1 = new Date(start2);
+                end1.setDate(end1.getDate() - 1);
+                const start1 = new Date(end1);
+                start1.setDate(start1.getDate() - 29); // 30 días
+                
+                if (comparativoPicker1) comparativoPicker1.setDate([start1, end1]);
+                if (comparativoPicker2) comparativoPicker2.setDate([start2, end2]);
+            } else {
+                // Fallback: últimos 30 días y 30 anteriores desde hoy
+                const now = new Date();
+                const end2 = new Date(now);
+                const start2 = new Date(now);
+                start2.setDate(start2.getDate() - 29);
+                const end1 = new Date(start2);
+                end1.setDate(end1.getDate() - 1);
+                const start1 = new Date(end1);
+                start1.setDate(start1.getDate() - 29);
+                
+                if (comparativoPicker1) comparativoPicker1.setDate([start1, end1]);
+                if (comparativoPicker2) comparativoPicker2.setDate([start2, end2]);
             }
+            
+            renderComparativo();
         }
         
         function limpiarFiltrosComparativo() {
             if(!comparativoActivo) return;
             comparativoSelectedAgencies = [];
             actualizarVistaComparativoAgencias();
-            const dataTemp = obtenerDataParaComparativo();
-            actualizarMesesDisponiblesEnSelects(dataTemp);
             renderComparativo();
         }
 
@@ -618,6 +629,7 @@
         function initDashboard() {
             cargarSelects();
             inicializarDateRangePicker();
+            inicializarComparativoPickers();
             configurarBotonLimpiar();
             construirMultiSelect('product', productosDisponibles, document.getElementById('productDropdown'), selectedProducts, actualizarVistaProductos, () => { showAllAgents = false; procesarYFiltrar(); });
             construirMultiSelect('estatus', estatusDisponibles, document.getElementById('estatusDropdown'), selectedStatuses, actualizarVistaEstatus, () => { showAllAgents = false; procesarYFiltrar(); });
@@ -625,8 +637,8 @@
             configurarBotonesTabla();
             
             inicializarComparativoAgencias();
-            document.getElementById('comparativoMesInicio').disabled = true;
-            document.getElementById('comparativoMesFin').disabled = true;
+            document.getElementById('comparativoRango1').disabled = true;
+            document.getElementById('comparativoRango2').disabled = true;
             document.getElementById('groupAgenciaComparativo').classList.add('disabled');
             document.getElementById('btnActivarComparativo').addEventListener('click', habilitarComparativo);
             document.getElementById('btnLimpiarComparativo').addEventListener('click', limpiarFiltrosComparativo);
@@ -732,6 +744,23 @@
                     dateRangePicker.setDate([minFechaGlobal, maxFechaGlobal]);
                 }
             }, 100);
+        }
+
+        function inicializarComparativoPickers() {
+            comparativoPicker1 = flatpickr("#comparativoRango1", {
+                mode: "range",
+                dateFormat: "m/d/Y",
+                locale: "es",
+                allowInput: false,
+                onChange: () => { if(comparativoActivo) renderComparativo(); }
+            });
+            comparativoPicker2 = flatpickr("#comparativoRango2", {
+                mode: "range",
+                dateFormat: "m/d/Y",
+                locale: "es",
+                allowInput: false,
+                onChange: () => { if(comparativoActivo) renderComparativo(); }
+            });
         }
 
         function configurarBotonLimpiar() {
@@ -951,9 +980,19 @@
                 resultados.push({ agencia, napTotal, metaSemanal: meta.semanal, promedioSemanal, semanasTexto, metaMensual: metaMensualDinamica, pctMes, claseMes });
             }
             resultados.sort((a,b) => b.napTotal - a.napTotal);
-            if(resultados.length === 0) tbody.innerHTML = '<tr><td colspan="7">No hay metas configuradas</td></tr>';
-            else tbody.innerHTML = resultados.map(r => `
-                <tr>
+            if(resultados.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7">No hay metas configuradas</td></tr>';
+                return;
+            }
+            
+            // Encontrar el máximo pctMes entre todas las agencias
+            const maxPct = Math.max(...resultados.map(r => r.pctMes));
+            
+            // Generar filas
+            tbody.innerHTML = resultados.map(r => {
+                // Si esta agencia tiene el máximo porcentaje, agregar clase 'mayor-logro'
+                const claseExtra = (r.pctMes === maxPct && maxPct > 0) ? ' mayor-logro' : '';
+                return `<tr class="${claseExtra}">
                     <td><strong>${escapeHtml(r.agencia)}</strong></td>
                     <td>$${r.napTotal.toLocaleString(undefined,{minFractionDigits:2})}</td>
                     <td>$${r.metaSemanal.toLocaleString()}</td>
@@ -961,8 +1000,8 @@
                     <td class="semanas-cumplidas">${r.semanasTexto}</td>
                     <td>$${r.metaMensual.toLocaleString()}</td>
                     <td class="${r.claseMes}">${r.pctMes.toFixed(1)}%</td>
-                </table>
-            `).join('');
+                </tr>`;
+            }).join('');
         }
         
         function getWeekNumber(date) {
@@ -979,17 +1018,14 @@
             return new Date(d.setDate(diff));
         }
         
-        // Función mejorada para dibujar gráficos: ahora ordena cronológicamente y respeta el filtro de fechas
         function dibujarGraficos(data) {
-            // Gráfico de tendencia diaria (sin cambios)
             let diasMap = {};
             data.forEach(d=>{ let f = parseFecha(d.FECHA_EMISION); if(f) diasMap[formatearFechaKey(f)] = (diasMap[formatearFechaKey(f)]||0)+d.NAP_CALC; });
             let labelsDias = Object.keys(diasMap).sort(), valuesDias = labelsDias.map(l=>diasMap[l]);
             if(chartD) chartD.destroy();
             chartD = new Chart(document.getElementById('chartDias'), { type:'line', data:{ labels:labelsDias, datasets:[{ label:'NAP', data:valuesDias, borderColor:'#d4af37', tension:0.3, fill:true, backgroundColor:'rgba(212,175,55,0.1)' }] }, options:{ responsive:true, maintainAspectRatio:true } });
             
-            // Gráfico NAP por Mes: usando la fecha real para agrupar y ordenar cronológicamente
-            const mesesMap = new Map(); // clave: YYYY-MM, valor: suma NAP
+            const mesesMap = new Map();
             data.forEach(d => {
                 const fecha = parseFecha(d.FECHA_EMISION);
                 if(fecha) {
@@ -998,13 +1034,11 @@
                     mesesMap.set(anioMes, (mesesMap.get(anioMes) || 0) + nap);
                 }
             });
-            // Ordenar las claves cronológicamente
             const sortedKeys = Array.from(mesesMap.keys()).sort();
             const labelsMeses = sortedKeys.map(key => {
                 const [year, month] = key.split('-');
                 const fecha = new Date(parseInt(year), parseInt(month)-1, 1);
                 const nombreMes = fecha.toLocaleString('es', { month: 'long' }).toUpperCase();
-                // Si hay más de un año, incluir el año para claridad
                 const añosUnicos = new Set(sortedKeys.map(k => k.split('-')[0]));
                 return añosUnicos.size > 1 ? `${nombreMes} ${year}` : nombreMes;
             });
