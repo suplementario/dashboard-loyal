@@ -263,10 +263,9 @@
 
     <!-- Módulo Regional -->
     <div id="regionalContainer">
-        <h3>🌐 REGIONAL - META MENSUAL: $480,000 NAP</h3>
+        <h3>🌐 METAS REGION: MENSUAL 480,000 - SEMANAL 120,000 NAP</h3>
         <div class="regional-info">
             <div class="regional-kpi">
-                <span>NAP Acumulado: <strong id="regionalNap">0</strong></span>
                 <span>Meta Mensual Ajustada: <strong id="regionalMeta">0</strong></span>
                 <span>% Cumplimiento: <strong id="regionalPorcentaje">0%</strong></span>
             </div>
@@ -274,7 +273,6 @@
                 <div class="progress-bar" id="regionalProgressBar" style="width:0%;">0%</div>
             </div>
             <div class="regional-detalle">
-                <span>Promedio Semanal: <strong id="regionalPromedioSemanal">0%</strong></span>
                 <span>Semanas que cumplieron meta: <strong id="regionalSemanasCumplidas">0</strong></span>
             </div>
         </div>
@@ -982,9 +980,6 @@
 
         // Nueva función para actualizar el módulo Regional
         function actualizarRegional(data) {
-            // Calcular NAP total
-            const napTotal = data.reduce((s, d) => s + d.NAP_CALC, 0);
-            
             // Obtener rango de fechas
             let startDate = null, endDate = null;
             if(dateRangePicker && dateRangePicker.selectedDates && dateRangePicker.selectedDates.length>=2) {
@@ -1008,10 +1003,11 @@
                 if (factorMeses < 1) factorMeses = 0;
             }
             
+            const napTotal = data.reduce((s, d) => s + d.NAP_CALC, 0);
             const metaMensualAjustada = META_REGIONAL_MENSUAL * factorMeses;
             const pctCumplimiento = metaMensualAjustada > 0 ? (napTotal / metaMensualAjustada) * 100 : 0;
             
-            // Calcular promedio semanal y semanas cumplidas
+            // Calcular semanas cumplidas
             const semanasInfo = new Map();
             const napPorSemana = new Map();
             data.forEach(d => {
@@ -1029,35 +1025,26 @@
                 napPorSemana.set(semanaKey, (napPorSemana.get(semanaKey) || 0) + d.NAP_CALC);
             });
             
-            let semanasEnRango = 0;
-            let sumaPctSemanal = 0;
             let semanasCumplidas = 0;
             for (let [semKey, semInfo] of semanasInfo.entries()) {
                 let semanaInRange = true;
                 if(startDate && semInfo.fin < startDate) semanaInRange = false;
                 if(endDate && semInfo.inicio > endDate) semanaInRange = false;
                 if(!semanaInRange) continue;
-                semanasEnRango++;
                 const napSemana = napPorSemana.get(semKey) || 0;
-                const pctSemana = META_REGIONAL_SEMANAL > 0 ? (napSemana / META_REGIONAL_SEMANAL) * 100 : 0;
-                sumaPctSemanal += pctSemana;
-                if(pctSemana >= 100) semanasCumplidas++;
+                if (napSemana >= META_REGIONAL_SEMANAL) semanasCumplidas++;
             }
-            const promedioSemanal = semanasEnRango > 0 ? sumaPctSemanal / semanasEnRango : 0;
             
             // Actualizar DOM
-            document.getElementById('regionalNap').textContent = napTotal.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
             document.getElementById('regionalMeta').textContent = metaMensualAjustada.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
             document.getElementById('regionalPorcentaje').textContent = pctCumplimiento.toFixed(1) + '%';
-            document.getElementById('regionalPromedioSemanal').textContent = promedioSemanal.toFixed(1) + '%';
             document.getElementById('regionalSemanasCumplidas').textContent = semanasCumplidas;
             
             // Barra de progreso
             const progressBar = document.getElementById('regionalProgressBar');
-            const pct = Math.min(pctCumplimiento, 100); // cap al 100% para la barra
+            const pct = Math.min(pctCumplimiento, 100);
             progressBar.style.width = pct + '%';
             progressBar.textContent = pctCumplimiento.toFixed(1) + '%';
-            // Clase de color
             progressBar.className = 'progress-bar';
             if (pctCumplimiento >= 100) progressBar.classList.add('alta');
             else if (pctCumplimiento >= 70) progressBar.classList.add('media');
