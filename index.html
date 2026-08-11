@@ -198,7 +198,7 @@
     <!-- Tabla de Alcance de Metas por Agencia -->
     <div class="metas-table-container">
         <h3>🎯 ALCANCE DE METAS POR AGENCIA</h3>
-        <div class="info-msg">📌 LA META MENSUAL SE MULTIPLICA SEGÚN LA CANTIDAD DE MESES INCLUIDOS EN EL RANGO DE FECHAS PRINCIPAL.</div>
+        <div class="info-msg">📌 LA META MENSUAL SE MULTIPLICA SEGÚN BLOQUES DE 4 SEMANAS COMPLETAS DENTRO DEL RANGO DE FECHAS.</div>
         <table class="metas-table" id="tablaMetasAgencias">
             <thead>
                 <tr><th>AGENCIA</th><th>NAP ACUMULADO</th><th>META SEMANAL</th><th>% PROMEDIO SEMANAL</th><th>SEMANAS QUE CUMPLIERON META</th><th>META MENSUAL*</th><th>% MES*</th></tr>
@@ -206,7 +206,7 @@
             <tbody id="tablaMetasBody"><tr><td colspan="7">Cargando...</td></tr>
             </tbody>
         </table>
-        <div class="small-text" style="margin-top: 8px;">*Meta mensual ajustada según el número de meses en el rango seleccionado.</div>
+        <div class="small-text" style="margin-top: 8px;">*Meta mensual ajustada según bloques de 4 semanas completas en el rango seleccionado.</div>
     </div>
 
     <!-- Módulo Comparativo por Rangos de Fechas -->
@@ -887,14 +887,14 @@
                 endDate = maxFechaGlobal;
             }
             
-            let numMeses = 1;
-            if(startDate && endDate) {
-                const startYear = startDate.getFullYear();
-                const startMonth = startDate.getMonth();
-                const endYear = endDate.getFullYear();
-                const endMonth = endDate.getMonth();
-                numMeses = (endYear - startYear) * 12 + (endMonth - startMonth) + 1;
-                if(numMeses < 1) numMeses = 1;
+            // Cálculo del factor de meses basado en semanas completas (4 semanas = 1 mes)
+            let factorMeses = 1;
+            if (startDate && endDate) {
+                const diffTime = Math.abs(endDate - startDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // días inclusive
+                const semanas = diffDays / 7;
+                factorMeses = Math.floor(semanas / 4);
+                if (factorMeses < 1) factorMeses = 0; // si no alcanza 4 semanas, no se aplica meta mensual
             }
             
             const napIndividual = new Map();
@@ -973,7 +973,7 @@
                     }
                 }
                 const promedioSemanal = semanasEnRango > 0 ? sumaPctSemanal / semanasEnRango : 0;
-                const metaMensualDinamica = meta.mensual * numMeses;
+                const metaMensualDinamica = meta.mensual * factorMeses;
                 const pctMes = metaMensualDinamica > 0 ? (napTotal / metaMensualDinamica) * 100 : 0;
                 const claseMes = pctMes >= 100 ? 'cumplimiento-alta' : (pctMes >= 70 ? 'cumplimiento-media' : 'cumplimiento-baja');
                 const semanasTexto = semanasCumplidas.length ? semanasCumplidas.join(', ') : 'Ninguna';
