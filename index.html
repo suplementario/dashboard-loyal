@@ -100,7 +100,6 @@
         .cumplimiento-media { color: #ed6c02; font-weight: bold; }
         .cumplimiento-baja { color: #c62828; font-weight: bold; }
         .semanas-cumplidas { font-size: 0.7rem; color: #0d2b45; font-weight: normal; }
-        /* Estilo para resaltar la agencia con mayor logro */
         .mayor-logro {
             background-color: #d4af37 !important;
             color: #0d2b45 !important;
@@ -142,6 +141,73 @@
         .btn-comparativo:hover { background-color: var(--dorado-loyal); color: var(--azul-loyal); }
         @media (max-width: 640px) { .comparativo-selector { flex-direction: column; align-items: stretch; } }
         .info-msg { font-size: 0.7rem; color: #0d2b45; background: #e9ecef; border-radius: 8px; padding: 6px 12px; margin-top: 8px; text-align: center; text-transform: uppercase; }
+
+        /* Estilos para el módulo Regional */
+        #regionalContainer {
+            background: var(--blanco);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        #regionalContainer h3 {
+            margin: 0 0 12px 0;
+            font-size: 1rem;
+            color: var(--azul-loyal);
+            border-left: 4px solid var(--dorado-loyal);
+            padding-left: 12px;
+            text-transform: uppercase;
+        }
+        .regional-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px 24px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .regional-kpi {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px 24px;
+            font-size: 0.9rem;
+        }
+        .regional-kpi strong {
+            color: var(--azul-loyal);
+        }
+        .progress-bar-container {
+            width: 100%;
+            max-width: 400px;
+            height: 24px;
+            background-color: #e9ecef;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: #c62828; /* rojo por defecto */
+            border-radius: 12px;
+            transition: width 0.5s ease;
+            text-align: center;
+            line-height: 24px;
+            color: white;
+            font-weight: bold;
+            font-size: 0.75rem;
+        }
+        .progress-bar.alta { background-color: #2e7d32; }
+        .progress-bar.media { background-color: #ed6c02; }
+        .progress-bar.baja { background-color: #c62828; }
+        .regional-detalle {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px 24px;
+            font-size: 0.8rem;
+            color: #555;
+        }
+        .regional-detalle strong {
+            color: var(--azul-loyal);
+        }
     </style>
 </head>
 <body>
@@ -193,6 +259,25 @@
         <div class="kpi-card"><h3>AGENTES</h3><p id="kpiAgentes">0</p></div>
         <div class="kpi-card"><h3>PERSISTENCIA</h3><p id="kpiPersistencia">0%</p><div class="small-text" id="persistenciaDetalle">Activas: 0 | Total: 0</div></div>
         <div class="kpi-card"><h3>TOP 3 ESTADOS</h3><p id="kpiTopEstados" style="font-size: 0.9rem;">-</p></div>
+    </div>
+
+    <!-- Módulo Regional -->
+    <div id="regionalContainer">
+        <h3>🌐 REGIONAL - META MENSUAL: $480,000 NAP</h3>
+        <div class="regional-info">
+            <div class="regional-kpi">
+                <span>NAP Acumulado: <strong id="regionalNap">0</strong></span>
+                <span>Meta Mensual Ajustada: <strong id="regionalMeta">0</strong></span>
+                <span>% Cumplimiento: <strong id="regionalPorcentaje">0%</strong></span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="regionalProgressBar" style="width:0%;">0%</div>
+            </div>
+            <div class="regional-detalle">
+                <span>Promedio Semanal: <strong id="regionalPromedioSemanal">0%</strong></span>
+                <span>Semanas que cumplieron meta: <strong id="regionalSemanasCumplidas">0</strong></span>
+            </div>
+        </div>
     </div>
 
     <!-- Tabla de Alcance de Metas por Agencia -->
@@ -267,6 +352,8 @@
     <script>
         const URL_SHEET = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfwEAFi_M-pfnW6dDjOKu91MfW4G4nSIKOAi4lG1-yx7OT3-e1it_0T3egcXyRPw/pub?output=csv';
         const META_MENSUAL_AGENTE = 10000;
+        const META_REGIONAL_SEMANAL = 120000;
+        const META_REGIONAL_MENSUAL = 480000;
         
         const METAS_AGENCIAS = {
             "PLATINIUM": { semanal: 60000, mensual: 240000 },
@@ -399,7 +486,6 @@
             return dataGlobal.slice();
         }
         
-        // Función para formatear un rango de fechas
         function formatearRango(inicio, fin) {
             if (!inicio || !fin) return '';
             const opts = { day: '2-digit', month: '2-digit', year: 'numeric' };
@@ -413,7 +499,6 @@
                 if(chartComparativo) chartComparativo.destroy();
                 return;
             }
-            // Obtener los rangos seleccionados
             const rango1 = comparativoPicker1 ? comparativoPicker1.selectedDates : [];
             const rango2 = comparativoPicker2 ? comparativoPicker2.selectedDates : [];
             
@@ -429,7 +514,6 @@
             const inicio2 = rango2[0];
             const fin2 = rango2[1];
             
-            // Actualizar encabezados
             document.getElementById('thPeriodo1').innerText = formatearRango(inicio1, fin1);
             document.getElementById('thPeriodo2').innerText = formatearRango(inicio2, fin2);
             
@@ -438,18 +522,15 @@
         
         function renderComparacionRangos(inicio1, fin1, inicio2, fin2) {
             const data = obtenerDataParaComparativo();
-            // Filtrar por agencias si se seleccionaron
             let dataFiltrada = data;
             if(comparativoSelectedAgencies.length > 0) {
                 dataFiltrada = data.filter(d => comparativoSelectedAgencies.includes(d.AGENCIAS));
             }
             
-            // Función para filtrar por rango de fechas
             function filtrarPorRango(data, inicio, fin) {
                 return data.filter(d => {
                     let f = parseFecha(d.FECHA_EMISION);
                     if (!f) return false;
-                    // Normalizar fechas para comparación (ignorar horas)
                     const fecha = new Date(f.getFullYear(), f.getMonth(), f.getDate());
                     const start = new Date(inicio.getFullYear(), inicio.getMonth(), inicio.getDate());
                     const end = new Date(fin.getFullYear(), fin.getMonth(), fin.getDate());
@@ -460,7 +541,6 @@
             const data1 = filtrarPorRango(dataFiltrada, inicio1, fin1);
             const data2 = filtrarPorRango(dataFiltrada, inicio2, fin2);
             
-            // Métricas
             const metrics = (d) => {
                 let nap = d.reduce((s,item)=>s+item.NAP_CALC,0);
                 let polizas = d.length;
@@ -478,7 +558,6 @@
                 <div class="comparativo-card"><h4>VARIACIÓN</h4><div class="valor ${m2.nap >= m1.nap ? 'variacion-positiva' : 'variacion-negativa'}">${((m2.nap - m1.nap)/m1.nap*100).toFixed(1)}%</div><div>NAP</div><div class="small-text">Pólizas: ${((m2.polizas - m1.polizas)/m1.polizas*100).toFixed(1)}%</div></div>
             `;
             
-            // Productos
             const prodMap = new Map();
             data1.forEach(d => { if(d.PRODUCTO) prodMap.set(d.PRODUCTO, { nap1: (prodMap.get(d.PRODUCTO)?.nap1||0) + d.NAP_CALC, nap2: prodMap.get(d.PRODUCTO)?.nap2||0 }); });
             data2.forEach(d => { if(d.PRODUCTO) prodMap.set(d.PRODUCTO, { nap1: prodMap.get(d.PRODUCTO)?.nap1||0, nap2: (prodMap.get(d.PRODUCTO)?.nap2||0) + d.NAP_CALC }); });
@@ -503,7 +582,6 @@
                 }).join('');
             }
             
-            // Gráfico
             if(chartComparativo) chartComparativo.destroy();
             const ctx = document.getElementById('chartComparativoMeses').getContext('2d');
             chartComparativo = new Chart(ctx, {
@@ -563,28 +641,24 @@
         
         function habilitarComparativo() {
             comparativoActivo = true;
-            // Habilitar inputs
             document.getElementById('comparativoRango1').disabled = false;
             document.getElementById('comparativoRango2').disabled = false;
             document.getElementById('groupAgenciaComparativo').classList.remove('disabled');
             document.getElementById('btnLimpiarComparativo').style.display = 'inline-block';
             document.getElementById('btnActivarComparativo').style.display = 'none';
             
-            // Establecer rangos predeterminados: los últimos 30 días para el período 2 y los 30 días anteriores para el período 1
             if (maxFechaGlobal && minFechaGlobal) {
-                // Usar el rango global para establecer valores
                 const end2 = new Date(maxFechaGlobal);
                 const start2 = new Date(end2);
-                start2.setDate(start2.getDate() - 29); // 30 días
+                start2.setDate(start2.getDate() - 29);
                 const end1 = new Date(start2);
                 end1.setDate(end1.getDate() - 1);
                 const start1 = new Date(end1);
-                start1.setDate(start1.getDate() - 29); // 30 días
+                start1.setDate(start1.getDate() - 29);
                 
                 if (comparativoPicker1) comparativoPicker1.setDate([start1, end1]);
                 if (comparativoPicker2) comparativoPicker2.setDate([start2, end2]);
             } else {
-                // Fallback: últimos 30 días y 30 anteriores desde hoy
                 const now = new Date();
                 const end2 = new Date(now);
                 const start2 = new Date(now);
@@ -812,14 +886,50 @@
             });
         }
 
+        // Nueva función para obtener datos sin filtro de agencia (para la regional)
+        function obtenerDatosFiltradosSinAgencia() {
+            let fAgente = document.getElementById('selAgente').value;
+            let prodFilter = getSelectedProductsFilter();
+            let estFilter = getSelectedStatusesFilter();
+            let start=null, end=null;
+            if(dateRangePicker && dateRangePicker.selectedDates && dateRangePicker.selectedDates.length>=2) {
+                start = dateRangePicker.selectedDates[0]; end = dateRangePicker.selectedDates[1];
+                if(start) start = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+                if(end) end = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+            } else if(dateRangePicker && dateRangePicker.selectedDates && dateRangePicker.selectedDates.length===1) {
+                let d = dateRangePicker.selectedDates[0];
+                if(d) start = end = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+            }
+            return dataGlobal.filter(d => {
+                let fechaOk = true;
+                if(start || end) {
+                    let f = parseFecha(d.FECHA_EMISION);
+                    if(f) {
+                        let fn = new Date(f.getFullYear(), f.getMonth(), f.getDate());
+                        if(start && fn < start) fechaOk = false;
+                        if(end && fn > end) fechaOk = false;
+                    } else fechaOk = false;
+                }
+                if(!fechaOk) return false;
+                if(fAgente !== 'TODOS' && d.AGENTE !== fAgente) return false;
+                // No filtramos por agencia
+                if(prodFilter !== null && !prodFilter.includes(d.PRODUCTO)) return false;
+                if(estFilter !== null && !estFilter.includes(d.ESTATUS)) return false;
+                return true;
+            });
+        }
+
         function procesarYFiltrar() {
             currentFilteredData = obtenerDatosFiltrados();
+            const dataRegional = obtenerDatosFiltradosSinAgencia();
+            
             actualizarCuadrosProductos(currentFilteredData);
             actualizarTopProductos(currentFilteredData);
             actualizarKPIs(currentFilteredData);
             dibujarGraficos(currentFilteredData);
             dibujarTablaMetasAgencias(currentFilteredData);
             dibujarTablaAgentes(currentFilteredData);
+            actualizarRegional(dataRegional);
         }
 
         function actualizarCuadrosProductos(data) {
@@ -870,6 +980,90 @@
             document.getElementById('kpiTopEstados').innerHTML = top3.length ? top3.map(([e,v],i)=>`${i+1}. ${e}: ${v.toLocaleString(undefined,{minFractionDigits:2})}`).join('<br>') : 'Sin datos';
         }
 
+        // Nueva función para actualizar el módulo Regional
+        function actualizarRegional(data) {
+            // Calcular NAP total
+            const napTotal = data.reduce((s, d) => s + d.NAP_CALC, 0);
+            
+            // Obtener rango de fechas
+            let startDate = null, endDate = null;
+            if(dateRangePicker && dateRangePicker.selectedDates && dateRangePicker.selectedDates.length>=2) {
+                startDate = dateRangePicker.selectedDates[0];
+                endDate = dateRangePicker.selectedDates[1];
+            } else if(dateRangePicker && dateRangePicker.selectedDates && dateRangePicker.selectedDates.length===1) {
+                startDate = endDate = dateRangePicker.selectedDates[0];
+            }
+            if(!startDate && minFechaGlobal) {
+                startDate = minFechaGlobal;
+                endDate = maxFechaGlobal;
+            }
+            
+            // Factor de meses (bloques de 4 semanas)
+            let factorMeses = 1;
+            if (startDate && endDate) {
+                const diffTime = Math.abs(endDate - startDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                const semanas = diffDays / 7;
+                factorMeses = Math.floor(semanas / 4);
+                if (factorMeses < 1) factorMeses = 0;
+            }
+            
+            const metaMensualAjustada = META_REGIONAL_MENSUAL * factorMeses;
+            const pctCumplimiento = metaMensualAjustada > 0 ? (napTotal / metaMensualAjustada) * 100 : 0;
+            
+            // Calcular promedio semanal y semanas cumplidas
+            const semanasInfo = new Map();
+            const napPorSemana = new Map();
+            data.forEach(d => {
+                const fecha = parseFecha(d.FECHA_EMISION);
+                if(!fecha) return;
+                const año = fecha.getFullYear();
+                const semanaNum = getWeekNumber(fecha);
+                const semanaKey = `${año}-W${semanaNum}`;
+                if(!semanasInfo.has(semanaKey)) {
+                    const inicioSemana = getStartOfWeek(fecha);
+                    const finSemana = new Date(inicioSemana);
+                    finSemana.setDate(inicioSemana.getDate() + 6);
+                    semanasInfo.set(semanaKey, { inicio: inicioSemana, fin: finSemana, numero: semanaNum, año });
+                }
+                napPorSemana.set(semanaKey, (napPorSemana.get(semanaKey) || 0) + d.NAP_CALC);
+            });
+            
+            let semanasEnRango = 0;
+            let sumaPctSemanal = 0;
+            let semanasCumplidas = 0;
+            for (let [semKey, semInfo] of semanasInfo.entries()) {
+                let semanaInRange = true;
+                if(startDate && semInfo.fin < startDate) semanaInRange = false;
+                if(endDate && semInfo.inicio > endDate) semanaInRange = false;
+                if(!semanaInRange) continue;
+                semanasEnRango++;
+                const napSemana = napPorSemana.get(semKey) || 0;
+                const pctSemana = META_REGIONAL_SEMANAL > 0 ? (napSemana / META_REGIONAL_SEMANAL) * 100 : 0;
+                sumaPctSemanal += pctSemana;
+                if(pctSemana >= 100) semanasCumplidas++;
+            }
+            const promedioSemanal = semanasEnRango > 0 ? sumaPctSemanal / semanasEnRango : 0;
+            
+            // Actualizar DOM
+            document.getElementById('regionalNap').textContent = napTotal.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+            document.getElementById('regionalMeta').textContent = metaMensualAjustada.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+            document.getElementById('regionalPorcentaje').textContent = pctCumplimiento.toFixed(1) + '%';
+            document.getElementById('regionalPromedioSemanal').textContent = promedioSemanal.toFixed(1) + '%';
+            document.getElementById('regionalSemanasCumplidas').textContent = semanasCumplidas;
+            
+            // Barra de progreso
+            const progressBar = document.getElementById('regionalProgressBar');
+            const pct = Math.min(pctCumplimiento, 100); // cap al 100% para la barra
+            progressBar.style.width = pct + '%';
+            progressBar.textContent = pctCumplimiento.toFixed(1) + '%';
+            // Clase de color
+            progressBar.className = 'progress-bar';
+            if (pctCumplimiento >= 100) progressBar.classList.add('alta');
+            else if (pctCumplimiento >= 70) progressBar.classList.add('media');
+            else progressBar.classList.add('baja');
+        }
+
         function dibujarTablaMetasAgencias(data) {
             const tbody = document.getElementById('tablaMetasBody');
             if(!tbody) return;
@@ -887,14 +1081,13 @@
                 endDate = maxFechaGlobal;
             }
             
-            // Cálculo del factor de meses basado en semanas completas (4 semanas = 1 mes)
             let factorMeses = 1;
             if (startDate && endDate) {
                 const diffTime = Math.abs(endDate - startDate);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // días inclusive
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
                 const semanas = diffDays / 7;
                 factorMeses = Math.floor(semanas / 4);
-                if (factorMeses < 1) factorMeses = 0; // si no alcanza 4 semanas, no se aplica meta mensual
+                if (factorMeses < 1) factorMeses = 0;
             }
             
             const napIndividual = new Map();
@@ -985,12 +1178,9 @@
                 return;
             }
             
-            // Encontrar el máximo pctMes entre todas las agencias
             const maxPct = Math.max(...resultados.map(r => r.pctMes));
             
-            // Generar filas
             tbody.innerHTML = resultados.map(r => {
-                // Si esta agencia tiene el máximo porcentaje, agregar clase 'mayor-logro'
                 const claseExtra = (r.pctMes === maxPct && maxPct > 0) ? ' mayor-logro' : '';
                 return `<tr class="${claseExtra}">
                     <td><strong>${escapeHtml(r.agencia)}</strong></td>
