@@ -590,184 +590,77 @@
   .bb-clear.bb-clear-reset svg{color:var(--warn)}
   .bb-clear.bb-clear-reset:hover{border-color:var(--warn)}
 
-  /* ====== VISTA JERARQUÍA (árbol desplegable) ====== */
-  .hierarchy-tree{
-    padding:6px 0;
-    display:flex;
-    flex-direction:column;
-    gap:2px;
-  }
+  .hierarchy-tree{padding:6px 0;display:flex;flex-direction:column;gap:2px;}
   .h-tree-node{position:relative}
-  .h-tree-children{
-    margin-left:28px;
-    padding-left:0;
-    border-left:none;
-    margin-top:2px;
-    display:flex;
-    flex-direction:column;
-    gap:2px;
-  }
+  .h-tree-children{margin-left:28px;padding-left:0;border-left:none;margin-top:2px;
+    display:flex;flex-direction:column;gap:2px;}
   .h-tree-children::before{display:none}
-
-  .h-node-card{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    padding:7px 10px;
-    background:transparent;
-    border:none;
-    border-radius:8px;
-    transition:background .15s;
-    cursor:pointer;
-    user-select:none;
-  }
+  .h-node-card{display:flex;align-items:center;gap:8px;padding:7px 10px;
+    background:transparent;border:none;border-radius:8px;transition:background .15s;
+    cursor:pointer;user-select:none;}
   .h-node-card:hover{background:var(--hover-row)}
   .h-node-card.is-root{background:transparent}
-
-  .h-node-toggle{
-    width:18px;
-    text-align:center;
-    font-size:11px;
-    color:var(--accent-2);
-    cursor:pointer;
-    flex-shrink:0;
-    font-weight:900;
-    line-height:1;
-    transition:color .15s,transform .15s;
-  }
+  .h-node-toggle{width:18px;text-align:center;font-size:11px;color:var(--accent-2);
+    cursor:pointer;flex-shrink:0;font-weight:900;line-height:1;
+    transition:color .15s,transform .15s;}
   .h-node-toggle:not(.leaf):hover{transform:scale(1.3)}
   .h-node-toggle.leaf{cursor:default;opacity:.3;color:var(--muted)}
-
-  .h-node-name{
-    font-weight:700;
-    font-size:13.5px;
-    color:var(--text);
-    display:flex;
-    align-items:center;
-    gap:8px;
-    flex:1;
-    min-width:0;
-    padding:2px 0;
-    transition:color .15s;
-  }
+  .h-node-name{font-weight:700;font-size:13.5px;color:var(--text);display:flex;
+    align-items:center;gap:8px;flex:1;min-width:0;padding:2px 0;transition:color .15s;}
   .h-node-card:hover .h-node-name{color:var(--accent-2)}
   .h-node-name .h-node-icon{font-size:16px;flex-shrink:0;line-height:1}
-  .h-node-name .h-node-text{
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  }
-  .h-node-name .h-node-ext{
-    font-size:10px;color:var(--muted);
-    opacity:0;transition:.15s;
-    flex-shrink:0;font-weight:800;letter-spacing:.5px;
-  }
+  .h-node-name .h-node-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .h-node-name .h-node-ext{font-size:10px;color:var(--muted);opacity:0;transition:.15s;
+    flex-shrink:0;font-weight:800;letter-spacing:.5px;}
   .h-node-card:hover .h-node-name .h-node-ext{opacity:1;color:var(--accent-2)}
-
-  .h-node-count{
-    font-size:10px;font-weight:800;
-    padding:2px 8px;border-radius:20px;
+  .h-node-count{font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;
     background:rgba(79,140,255,.15);color:var(--accent-2);
-    border:1px solid rgba(79,140,255,.3);
-    flex-shrink:0;
-    font-variant-numeric:tabular-nums;
-    margin-left:6px;
-  }
+    border:1px solid rgba(79,140,255,.3);flex-shrink:0;
+    font-variant-numeric:tabular-nums;margin-left:6px;}
   body.light .h-node-count{background:rgba(201,150,42,.15);
     border-color:rgba(201,150,42,.35);color:#a8781a}
-
-  .h-node-card.is-leader{
-    background:linear-gradient(90deg,rgba(79,140,255,.06),transparent 70%);
-  }
-  .h-node-card.is-leader:hover{
-    background:linear-gradient(90deg,rgba(79,140,255,.12),var(--hover-row) 70%);
-  }
-
-  .hierarchy-toolbar{
-    display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;
-  }
-  .hierarchy-toolbar button{
-    padding:6px 12px;font-size:11.5px;
+  .h-node-card.is-leader{background:linear-gradient(90deg,rgba(79,140,255,.06),transparent 70%);}
+  .h-node-card.is-leader:hover{background:linear-gradient(90deg,rgba(79,140,255,.12),var(--hover-row) 70%);}
+  .hierarchy-toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;}
+  .hierarchy-toolbar button{padding:6px 12px;font-size:11.5px;
     background:var(--input-bg);border:1px solid var(--line);
-    border-radius:8px;color:var(--text);font-weight:600;
-    cursor:pointer;font-family:inherit;transition:.15s;
-  }
-  .hierarchy-toolbar button:hover{
-    border-color:var(--accent-2);color:var(--accent-2);
-  }
+    border-radius:8px;color:var(--text);font-weight:600;cursor:pointer;font-family:inherit;transition:.15s;}
+  .hierarchy-toolbar button:hover{border-color:var(--accent-2);color:var(--accent-2);}
 
-  /* ====== MODAL JERARQUÍA ====== */
   .hm-chips{display:flex;flex-wrap:wrap;gap:8px}
-  .hm-chip{
-    display:inline-flex;align-items:center;gap:8px;
-    padding:8px 14px;border-radius:10px;
+  .hm-chip{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:10px;
     background:var(--input-bg);border:1px solid var(--line);
-    font-size:12.5px;font-weight:600;color:var(--text);
-    transition:.15s;max-width:100%;
-  }
+    font-size:12.5px;font-weight:600;color:var(--text);transition:.15s;max-width:100%;}
   .hm-chip .hm-chip-icon{font-size:14px;flex-shrink:0}
   .hm-chip .hm-chip-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
   .hm-chip.clickable{cursor:pointer;user-select:none}
-  .hm-chip.clickable:hover{
-    border-color:var(--accent-2);background:var(--hover-row);
-    transform:translateY(-1px);box-shadow:0 6px 14px rgba(79,140,255,.15);
-  }
+  .hm-chip.clickable:hover{border-color:var(--accent-2);background:var(--hover-row);
+    transform:translateY(-1px);box-shadow:0 6px 14px rgba(79,140,255,.15);}
   .hm-chip.hm-chip-empty{color:var(--muted);font-style:italic;cursor:default;opacity:.75}
-  .hm-empty{
-    padding:16px;text-align:center;color:var(--muted);font-size:12px;font-style:italic;
-    border:1px dashed var(--line);border-radius:10px;background:var(--input-bg-2);
-  }
+  .hm-empty{padding:16px;text-align:center;color:var(--muted);font-size:12px;font-style:italic;
+    border:1px dashed var(--line);border-radius:10px;background:var(--input-bg-2);}
 
-  /* Info personal del agente en el modal de jerarquía */
   .hm-info-list{display:flex;flex-direction:column;gap:8px}
-  .hm-info-row{
-    display:grid;grid-template-columns:180px 1fr;gap:12px;align-items:start;
+  .hm-info-row{display:grid;grid-template-columns:180px 1fr;gap:12px;align-items:start;
     padding:10px 14px;background:var(--input-bg);border:1px solid var(--line);
-    border-radius:10px;font-size:12.5px;
-  }
-  .hm-info-lbl{
-    color:var(--muted);font-weight:700;text-transform:uppercase;
-    font-size:10.5px;letter-spacing:.6px;padding-top:2px;
-  }
+    border-radius:10px;font-size:12.5px;}
+  .hm-info-lbl{color:var(--muted);font-weight:700;text-transform:uppercase;
+    font-size:10.5px;letter-spacing:.6px;padding-top:2px;}
   .hm-info-val{color:var(--text);font-weight:600;word-break:break-word}
   @media(max-width:520px){.hm-info-row{grid-template-columns:1fr}}
 
-  /* Chips de códigos de nivel en modal jerarquía */
-  .hm-level-chips{
-    display:flex;
-    flex-wrap:wrap;
-    gap:6px;
-  }
-  .hm-level-chip{
-    display:inline-flex;
-    align-items:center;
-    padding:3px 10px;
-    border-radius:20px;
+  .hm-level-chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .hm-level-chip{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;
     background:linear-gradient(135deg,rgba(79,140,255,.18),rgba(61,220,151,.14));
-    border:1px solid rgba(79,140,255,.45);
-    color:var(--accent-2);
-    font-size:11.5px;
-    font-weight:800;
-    font-variant-numeric:tabular-nums;
-    letter-spacing:.3px;
-    white-space:nowrap;
-  }
-  body.light .hm-level-chip{
-    background:linear-gradient(135deg,rgba(201,150,42,.18),rgba(184,134,11,.12));
-    border-color:rgba(201,150,42,.5);
-    color:#a8781a;
-  }
-  .hm-level-empty{
-    color:var(--muted);
-    font-size:11.5px;
-    font-style:italic;
-  }
+    border:1px solid rgba(79,140,255,.45);color:var(--accent-2);
+    font-size:11.5px;font-weight:800;font-variant-numeric:tabular-nums;
+    letter-spacing:.3px;white-space:nowrap;}
+  body.light .hm-level-chip{background:linear-gradient(135deg,rgba(201,150,42,.18),rgba(184,134,11,.12));
+    border-color:rgba(201,150,42,.5);color:#a8781a;}
+  .hm-level-empty{color:var(--muted);font-size:11.5px;font-style:italic;}
 
-  @media (max-width:600px){
-    .h-tree-children{margin-left:18px}
-  }
-  @media (max-width:900px){
-    .dr-calendars{flex-direction:column;gap:14px}
-    .dr-month{min-width:0;width:100%}
-  }
+  @media (max-width:600px){.h-tree-children{margin-left:18px}}
+  @media (max-width:900px){.dr-calendars{flex-direction:column;gap:14px}.dr-month{min-width:0;width:100%}}
   @media (max-width:760px){
     .tp-row{grid-template-columns:36px 1fr;gap:10px;padding:12px}
     .tp-row .tp-stat{display:none}
@@ -786,63 +679,30 @@
     .theme-toggle{width:40px;height:40px}
   }
 
-  /* ====== BARRA DE BÚSQUEDA JERARQUÍA ====== */
-  .jerarquia-search-bar{
-    display:flex;
-    flex-wrap:wrap;
-    gap:10px;
-    align-items:center;
+  .jerarquia-search-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;
     background:linear-gradient(180deg,var(--panel),var(--panel-2));
-    border:1px solid var(--line);
-    border-radius:var(--radius);
-    padding:12px 16px;
-    margin-bottom:12px;
-  }
-  .jerarquia-search-bar .jsb-icon{
-    font-size:16px;
-    color:var(--accent-2);
-    flex-shrink:0;
-  }
-  .jerarquia-search-bar input{
-    flex:1 1 180px;
-    min-width:140px;
-    background:var(--input-bg);
-    border:1px solid var(--line);
-    border-radius:10px;
-    padding:8px 12px;
-    color:var(--text);
-    font-size:13px;
-    font-family:inherit;
-    outline:none;
-    transition:.15s;
-  }
-  .jerarquia-search-bar input:focus{
-    border-color:var(--accent-2);
-  }
-  .jerarquia-search-bar input::placeholder{
-    color:var(--muted);
-  }
-  .jerarquia-search-bar .jsb-clear{
-    padding:6px 12px;
-    background:var(--input-bg);
-    border:1px solid var(--line);
-    border-radius:8px;
-    color:var(--muted);
-    font-size:11.5px;
-    font-weight:600;
-    cursor:pointer;
-    font-family:inherit;
-    transition:.15s;
-  }
-  .jerarquia-search-bar .jsb-clear:hover{
-    border-color:var(--danger);
-    color:var(--danger);
-  }
-  .jerarquia-search-bar .jsb-result-count{
-    font-size:11px;
-    color:var(--muted);
-    font-weight:600;
-    white-space:nowrap;
+    border:1px solid var(--line);border-radius:var(--radius);
+    padding:12px 16px;margin-bottom:12px;}
+  .jerarquia-search-bar .jsb-icon{font-size:16px;color:var(--accent-2);flex-shrink:0;}
+  .jerarquia-search-bar input{flex:1 1 180px;min-width:140px;background:var(--input-bg);
+    border:1px solid var(--line);border-radius:10px;padding:8px 12px;color:var(--text);
+    font-size:13px;font-family:inherit;outline:none;transition:.15s;}
+  .jerarquia-search-bar input:focus{border-color:var(--accent-2);}
+  .jerarquia-search-bar input::placeholder{color:var(--muted);}
+  .jerarquia-search-bar .jsb-clear{padding:6px 12px;background:var(--input-bg);
+    border:1px solid var(--line);border-radius:8px;color:var(--muted);
+    font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s;}
+  .jerarquia-search-bar .jsb-clear:hover{border-color:var(--danger);color:var(--danger);}
+  .jerarquia-search-bar .jsb-result-count{font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap;}
+
+  /* Badge del filtro de producto activo */
+  .filter-active-badge{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;
+    padding:3px 9px;border-radius:20px;
+    background:rgba(61,220,151,.16);color:var(--accent);
+    border:1px solid rgba(61,220,151,.4);
+    margin-left:4px;
   }
 </style>
 </head>
@@ -876,6 +736,24 @@
         </button>
         <div class="ms-panel">
           <input type="text" class="ms-search" placeholder="Buscar agente…" />
+          <div class="ms-actions">
+            <button class="ms-all" type="button">Todos</button>
+            <button class="ms-none" type="button">Ninguno</button>
+          </div>
+          <div class="ms-options"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="filter-group" id="fgProducto">
+      <label>📦 Producto</label>
+      <div class="ms-select" id="msProducto">
+        <button class="ms-btn" type="button">
+          <span class="ms-label">Todos</span>
+          <span class="ms-caret">▾</span>
+        </button>
+        <div class="ms-panel">
+          <input type="text" class="ms-search" placeholder="Buscar producto…" />
           <div class="ms-actions">
             <button class="ms-all" type="button">Todos</button>
             <button class="ms-none" type="button">Ninguno</button>
@@ -1301,7 +1179,9 @@ const state = {
   jerarquiaExpandedInit: false,
   jerarquiaSearch: ''
 };
-const filters = { agentes:null, estatus:null, desde:null, hasta:null };
+
+/* ★ CAMBIO: se agrega 'productos' al objeto de filtros */
+const filters = { agentes:null, productos:null, estatus:null, desde:null, hasta:null };
 
 /* ============================================================
    HELPERS
@@ -1402,7 +1282,7 @@ function palette(n){
 }
 
 /* ============================================================
-   JERARQUÍA DE AGENCIAS (para agencias, no agentes)
+   JERARQUÍA DE AGENCIAS
    ============================================================ */
 const HIERARCHY = {
   'loyal plus':    ['AMY INSURANCE','RAM PAT','RAM PATT'],
@@ -1430,10 +1310,8 @@ function getUniqueAgentsFromJerarquia(){
   if (!rows.length) return null;
   const info = detectJerarquiaSchema();
   if (!info.nameCol) return null;
-
   const norm = s => String(s == null ? '' : s).trim()
     .normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-
   const isEmpty = (v) => {
     if (v == null) return true;
     const s = String(v).trim();
@@ -1443,7 +1321,6 @@ function getUniqueAgentsFromJerarquia(){
         || up === 'N/A' || up === 'NA' || up === '-' || up === '—'
         || up === 'NINGUNO' || up === 'NINGUNA' || up === 'NO APLICA';
   };
-
   const set = new Set();
   rows.forEach(r => {
     const n = r[info.nameCol];
@@ -1473,20 +1350,24 @@ function buildDistinctOptions(col){
   if (set.has(EMPTY_KEY)) arr.push(EMPTY_KEY);
   return arr;
 }
+
+/* ★ CAMBIO: getFilteredRows ahora aplica el filtro de producto */
 function getFilteredRows(){
   const rows = state.rows;
   if (!rows.length) return rows;
-  const fAg = filters.agentes, fEs = filters.estatus;
+  const fAg = filters.agentes, fPr = filters.productos, fEs = filters.estatus;
   const d1 = filters.desde, d2 = filters.hasta;
-  const agCol = state.agenteCol, esCol = state.estatusCol, emCol = getDateCol();
+  const agCol = state.agenteCol, prCol = state.productoCol, esCol = state.estatusCol, emCol = getDateCol();
   const needAg   = !!(agCol && fAg);
+  const needPr   = !!(prCol && fPr);
   const needEs   = !!(esCol && fEs);
   const needDate = !!((d1 || d2) && emCol);
-  if (!needAg && !needEs && !needDate) return rows;
+  if (!needAg && !needPr && !needEs && !needDate) return rows;
   const out = [];
   for (let i = 0; i < rows.length; i++){
     const r = rows[i];
     if (needAg   && !fAg.has(filterKey(r[agCol]))) continue;
+    if (needPr   && !fPr.has(filterKey(r[prCol]))) continue;
     if (needEs   && !fEs.has(filterKey(r[esCol]))) continue;
     if (needDate){
       const dk = dayKey(r[emCol]);
@@ -1715,11 +1596,13 @@ function initDateRangePicker(onChange){
 /* ============================================================
    INICIALIZACIÓN DE FILTROS
    ============================================================ */
-let msAgente, msEstatus, drPicker;
+/* ★ CAMBIO: se agrega msProducto */
+let msAgente, msProducto, msEstatus, drPicker;
 function initFilters(){
-  msAgente = createMultiSelect(document.getElementById('msAgente'), (sel) => { filters.agentes = sel; applyFilters(); });
-  msEstatus = createMultiSelect(document.getElementById('msEstatus'), (sel) => { filters.estatus = sel; applyFilters(); });
-  drPicker = initDateRangePicker(() => applyFilters());
+  msAgente   = createMultiSelect(document.getElementById('msAgente'),   (sel) => { filters.agentes   = sel; applyFilters(); });
+  msProducto = createMultiSelect(document.getElementById('msProducto'), (sel) => { filters.productos = sel; applyFilters(); });
+  msEstatus  = createMultiSelect(document.getElementById('msEstatus'),  (sel) => { filters.estatus   = sel; applyFilters(); });
+  drPicker   = initDateRangePicker(() => applyFilters());
 
   document.addEventListener('click', e => {
     if (!e.target.closest('.ms-select')) document.querySelectorAll('.ms-select.open').forEach(x => x.classList.remove('open'));
@@ -1732,8 +1615,11 @@ function initFilters(){
     }
   });
 }
+
+/* ★ CAMBIO: populateFilters ahora llena también el filtro de Producto */
 function populateFilters(){
   const fgAg = document.getElementById('fgAgente');
+  const fgPr = document.getElementById('fgProducto');
   const fgEs = document.getElementById('fgEstatus');
   const fgFe = document.getElementById('fgFecha');
   if (state.agenteCol){
@@ -1741,6 +1627,11 @@ function populateFilters(){
     msAgente.setOptions(buildDistinctOptions(state.agenteCol));
     filters.agentes = null;
   } else { fgAg.classList.add('hidden'); filters.agentes = null; }
+  if (state.productoCol){
+    fgPr.classList.remove('hidden');
+    msProducto.setOptions(buildDistinctOptions(state.productoCol));
+    filters.productos = null;
+  } else { fgPr.classList.add('hidden'); filters.productos = null; }
   if (state.estatusCol){
     fgEs.classList.remove('hidden');
     msEstatus.setOptions(buildDistinctOptions(state.estatusCol));
@@ -3671,7 +3562,6 @@ async function loadJerarquiaTable(){
   }
   return false;
 }
-
 function detectJerarquiaSchema(){
   const cols = state.jerarquiaColumns || [];
   const find = (pats) => {
@@ -3703,25 +3593,11 @@ function detectJerarquiaSchema(){
     agenteCol: find([/^agente$/i, /agente/i, /agent/i])
   };
 }
-
-/* ============================================================
-   COLUMNAS DE CÓDIGOS DE NIVEL (jerarquía)
-   Detecta cualquier columna que represente el "código de nivel"
-   del agente (Nivel, Level, Codigo Nivel, Nivel_Codigo, etc.)
-   ============================================================ */
 function getLevelCodeColumns(){
   const cols = state.jerarquiaColumns || [];
   const pats = [
-    /c[oó]digo.*nivel/i,
-    /nivel.*c[oó]digo/i,
-    /cod.*nivel/i,
-    /nivel.*cod/i,
-    /^nivel$/i,
-    /^level$/i,
-    /^nivel_/i,
-    /_nivel$/i,
-    /^rango$/i,
-    /^rank$/i
+    /c[oó]digo.*nivel/i, /nivel.*c[oó]digo/i, /cod.*nivel/i, /nivel.*cod/i,
+    /^nivel$/i, /^level$/i, /^nivel_/i, /_nivel$/i, /^rango$/i, /^rank$/i
   ];
   const found = [];
   cols.forEach(c=>{
@@ -3729,17 +3605,11 @@ function getLevelCodeColumns(){
   });
   return found;
 }
-
-/* ============================================================
-   CONSTRUCCIÓN DEL ÁRBOL
-   ============================================================ */
 function buildJerarquiaTreeData(rows, info){
   const nameCol   = info.nameCol;
   const parentCol = info.parentCol;
-
   const norm = s => String(s == null ? '' : s).trim()
     .normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-
   const isEmpty = (v) => {
     if (v == null) return true;
     const s = String(v).trim();
@@ -3750,9 +3620,7 @@ function buildJerarquiaTreeData(rows, info){
         || up === 'NINGUNO' || up === 'NINGUNA' || up === 'NO APLICA'
         || up === 'NAN' || up === 'UNDEFINED';
   };
-
   const nodeMap = new Map();
-
   function getOrCreate(rawName){
     const name = String(rawName == null ? '' : rawName).trim();
     const key  = norm(name);
@@ -3767,7 +3635,6 @@ function buildJerarquiaTreeData(rows, info){
     }
     return nodeMap.get(key);
   }
-
   rows.forEach(r => {
     const name = r[nameCol];
     if (isEmpty(name)) return;
@@ -3775,47 +3642,32 @@ function buildJerarquiaTreeData(rows, info){
     if (!node) return;
     if (!node.row) node.row = r;
   });
-
   if (parentCol){
     rows.forEach(r => {
       const p = r[parentCol];
       if (isEmpty(p)) return;
       getOrCreate(p);
     });
-
     rows.forEach(r => {
       const name = r[nameCol];
       if (isEmpty(name)) return;
       const node = nodeMap.get(norm(name));
       if (!node) return;
-
       const p = r[parentCol];
       if (isEmpty(p)) return;
-
       const parentKey = norm(p);
       if (parentKey === node.key) return;
-
-      if (!node.parentKey){
-        node.parentKey = parentKey;
-      }
+      if (!node.parentKey){ node.parentKey = parentKey; }
     });
   }
-
   const roots = [];
   nodeMap.forEach(node => {
     const pk = node.parentKey;
-    if (!pk || pk === node.key){
-      roots.push(node);
-      return;
-    }
+    if (!pk || pk === node.key){ roots.push(node); return; }
     const parent = nodeMap.get(pk);
-    if (parent && parent !== node){
-      parent.children.push(node);
-    } else {
-      roots.push(node);
-    }
+    if (parent && parent !== node){ parent.children.push(node); }
+    else { roots.push(node); }
   });
-
   function hasCycle(nodeKey, chain = new Set()){
     if (chain.has(nodeKey)) return true;
     const n = nodeMap.get(nodeKey);
@@ -3834,19 +3686,12 @@ function buildJerarquiaTreeData(rows, info){
       if (!roots.includes(node)) roots.push(node);
     }
   });
-
   const sortByName = (a,b) => a.name.localeCompare(b.name, 'es');
   nodeMap.forEach(n => n.children.sort(sortByName));
   roots.sort(sortByName);
-
   const cleanRoots = roots.filter(n => n.children.length > 0 || n.row);
-
   return { roots: cleanRoots, nodeMap, norm, isEmpty };
 }
-
-/* ============================================================
-   BÚSQUEDA EN JERARQUÍA
-   ============================================================ */
 function getSearchFields(){
   const info = detectJerarquiaSchema();
   const cols = state.jerarquiaColumns || [];
@@ -3866,7 +3711,6 @@ function getSearchFields(){
   }
   return { fields, idProducer, npn };
 }
-
 function matchesSearch(row, searchTerm, fields){
   if (!searchTerm) return true;
   const term = String(searchTerm).trim().toLowerCase();
@@ -3877,31 +3721,23 @@ function matchesSearch(row, searchTerm, fields){
     return String(v).toLowerCase().includes(term);
   });
 }
-
-/* ============================================================
-   RENDER JERARQUÍA
-   ============================================================ */
 function renderJerarquiaView(){
   const rows = state.jerarquiaRows || [];
   const treeBox   = document.getElementById('jerarquiaTree');
   const searchInput = document.getElementById('jerarquiaSearchInput');
   const searchCount = document.getElementById('jerarquiaSearchCount');
-
   if (!rows.length){
     treeBox.innerHTML = `<div class="empty">No hay datos en la tabla <code>Jerarquia</code>.<br>
       Verifica que exista y tenga permisos de lectura.</div>`;
     if (searchCount) searchCount.textContent = '';
     return;
   }
-
   const info = detectJerarquiaSchema();
   const built = buildJerarquiaTreeData(rows, info);
-
   const searchTerm = state.jerarquiaSearch || '';
   let filteredRoots = built.roots;
   let totalNodes = built.nodeMap.size;
   let resultCount = totalNodes;
-
   if (searchTerm.trim()){
     const { fields } = getSearchFields();
     if (fields.length){
@@ -3932,7 +3768,6 @@ function renderJerarquiaView(){
         });
       };
       matchingKeys.forEach(key => addDescendants(key));
-
       const newRoots = [];
       included.forEach(key => {
         const node = built.nodeMap.get(key);
@@ -3958,7 +3793,6 @@ function renderJerarquiaView(){
       resultCount = included.size;
     }
   }
-
   if (searchCount){
     if (searchTerm.trim()){
       searchCount.textContent = `${resultCount} resultado${resultCount===1?'':'s'}`;
@@ -3966,35 +3800,27 @@ function renderJerarquiaView(){
       searchCount.textContent = `${totalNodes} agentes`;
     }
   }
-
   if (!filteredRoots.length){
     treeBox.innerHTML = `<div class="empty">No se encontraron resultados para "${escapeHtml(searchTerm)}"</div>`;
     return;
   }
-
   renderJerarquiaTreeFromNodes(filteredRoots, treeBox);
 }
-
 function renderJerarquiaTreeFromNodes(roots, container){
   if (!roots || !roots.length){
     container.innerHTML = `<div class="empty">No se pudo construir el árbol: no hay líderes ni agentes válidos.</div>`;
     return;
   }
-
   function nodeHtml(node, depth, isFirstRootPath){
     const name = node.name;
     const kids = node.children || [];
     const hasKids = kids.length > 0;
-
     const icon = hasKids ? '👥' : '👤';
     const toggleChar = hasKids ? (isFirstRootPath ? '▼' : '▶') : '•';
-
     const kidsStyle = isFirstRootPath ? '' : 'display:none';
-
     const kidsHtml = hasKids
       ? `<div class="h-tree-children" style="${kidsStyle}">${kids.map(k => nodeHtml(k, depth + 1, false)).join('')}</div>`
       : '';
-
     return `<div class="h-tree-node">
       <div class="h-node-card ${hasKids ? 'is-leader' : ''}">
         <span class="h-node-toggle ${hasKids ? '' : 'leaf'}" data-toggle="${hasKids ? '1' : '0'}">${toggleChar}</span>
@@ -4008,12 +3834,10 @@ function renderJerarquiaTreeFromNodes(roots, container){
       ${kidsHtml}
     </div>`;
   }
-
   container.innerHTML = `<div style="padding:6px 0;color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase">
     🌳 ${roots.length} ${roots.length === 1 ? 'líder' : 'líderes'} · clic en un nombre para ver el detalle
   </div>`
   + roots.map((r, idx) => nodeHtml(r, 0, idx === 0)).join('');
-
   container.querySelectorAll('.h-node-toggle').forEach(t => {
     if (t.dataset.toggle !== '1') return;
     t.addEventListener('click', (e) => {
@@ -4026,7 +3850,6 @@ function renderJerarquiaTreeFromNodes(roots, container){
       t.textContent = open ? '▶' : '▼';
     });
   });
-
   container.querySelectorAll('.h-node-name.clickable').forEach(el => {
     el.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -4034,26 +3857,15 @@ function renderJerarquiaTreeFromNodes(roots, container){
     });
   });
 }
-
-/* ============================================================
-   MODAL DETALLE AGENTE JERARQUÍA
-   Solo muestra: información personal del agente.
-   El KPI "Reportes Directos" solo aparece si el agente tiene > 0.
-   Se eliminó por completo el KPI "Total a su mando".
-   Incluye: códigos de nivel que ha tenido (sin repetir).
-   ============================================================ */
 function openHierarchyAgentModal(agentName){
   const rows = state.jerarquiaRows || [];
   if (!rows.length) return;
   const info = detectJerarquiaSchema();
   if (!info.nameCol) return;
-
   const built = buildJerarquiaTreeData(rows, info);
   const normKey = built.norm(agentName);
   const node = built.nodeMap.get(normKey);
   if (!node) return;
-
-  // Contexto (chips de meta en el header)
   const contextEl = document.getElementById('hmContext');
   const metaParts = [];
   if (node.row){
@@ -4068,13 +3880,9 @@ function openHierarchyAgentModal(agentName){
     }
   }
   contextEl.textContent = metaParts.length ? metaParts.join(' · ') : 'Jerarquía';
-
   document.getElementById('hmTitle').textContent = node.name;
-
-  // KPIs: solo "Reportes Directos" (y solo si tiene > 0)
   const directChildren = (node.children || []).slice();
   const kpisBox = document.getElementById('hmKpis');
-
   if (directChildren.length > 0){
     kpisBox.innerHTML = `
       <div class="am-kpi" style="--kc:#22d3ee">
@@ -4088,8 +3896,6 @@ function openHierarchyAgentModal(agentName){
     kpisBox.innerHTML = '';
     kpisBox.style.display = 'none';
   }
-
-  // ===== Códigos de nivel que ha tenido (sin repetir) =====
   const levelCols = getLevelCodeColumns();
   const levelCodesSet = new Set();
   if (levelCols.length){
@@ -4113,12 +3919,9 @@ function openHierarchyAgentModal(agentName){
     if (Number.isFinite(na) && Number.isFinite(nb)) return na - nb;
     return a.localeCompare(b, 'es', { numeric:true });
   });
-
-  // Información personal (todas las columnas de su fila)
   const allCols = state.jerarquiaColumns || [];
   const infoList = document.getElementById('hmInfoList');
   const infoSection = document.getElementById('hmInfoSection');
-
   if (allCols.length && node.row){
     let html = allCols.map(c => {
       const v = node.row[c];
@@ -4132,8 +3935,6 @@ function openHierarchyAgentModal(agentName){
         <div class="hm-info-val">${escapeHtml(s)}</div>
       </div>`;
     }).join('');
-
-    // Fila con los códigos de nivel (únicos)
     if (levelCols.length){
       const chipsHtml = levelCodes.length
         ? `<div class="hm-level-chips">${levelCodes.map(code =>
@@ -4145,7 +3946,6 @@ function openHierarchyAgentModal(agentName){
         <div class="hm-info-val">${chipsHtml}</div>
       </div>`;
     }
-
     infoList.innerHTML = html;
     infoSection.style.display = '';
   } else if (allCols.length && !node.row){
@@ -4158,7 +3958,6 @@ function openHierarchyAgentModal(agentName){
         <div class="hm-info-lbl">Nombre</div>
         <div class="hm-info-val">${escapeHtml(node.name)}</div>
       </div>`;
-
     if (levelCols.length && levelCodes.length){
       html += `<div class="hm-info-row">
         <div class="hm-info-lbl">Códigos de nivel</div>
@@ -4169,13 +3968,11 @@ function openHierarchyAgentModal(agentName){
         </div>
       </div>`;
     }
-
     infoList.innerHTML = html;
     infoSection.style.display = '';
   } else {
     infoSection.style.display = 'none';
   }
-
   document.getElementById('hierarchyModalOverlay').classList.add('open');
   document.body.classList.add('modal-open');
 }
@@ -4290,13 +4087,16 @@ function bindEvents(){
   const themeBtn = document.getElementById('themeToggle');
   if (themeBtn) themeBtn.onclick = toggleTheme;
 
+  /* ★ CAMBIO: se resetea también el filtro de producto */
   document.getElementById('bb-reset').onclick = ()=>{
-    filters.agentes = null;
-    filters.estatus = null;
-    filters.desde   = null;
-    filters.hasta   = null;
-    if (state.agenteCol && msAgente)  msAgente.setOptions(buildDistinctOptions(state.agenteCol));
-    if (state.estatusCol && msEstatus) msEstatus.setOptions(buildDistinctOptions(state.estatusCol));
+    filters.agentes   = null;
+    filters.productos = null;
+    filters.estatus   = null;
+    filters.desde     = null;
+    filters.hasta     = null;
+    if (state.agenteCol   && msAgente)   msAgente.setOptions(buildDistinctOptions(state.agenteCol));
+    if (state.productoCol && msProducto) msProducto.setOptions(buildDistinctOptions(state.productoCol));
+    if (state.estatusCol  && msEstatus)  msEstatus.setOptions(buildDistinctOptions(state.estatusCol));
     if (drPicker) drPicker.reset();
     state.selectedAgencia          = REGION_NAME;
     state.selectedTrimestre        = null;
