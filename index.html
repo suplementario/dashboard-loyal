@@ -1186,16 +1186,34 @@ const filters = { agentes:null, productos:null, estatus:null, desde:null, hasta:
 /* ============================================================
    HELPERS
    ============================================================ */
+/* ★ FIX #1: parseo robusto de números.
+   - "1,500"      → 1500   (miles con coma, sin decimales)
+   - "1,500,000"  → 1500000
+   - "1,500.50"   → 1500.5
+   - "1.500,50"   → 1500.5 (europeo)
+   - "1.500"      → 1500   (miles con punto, sin decimales)
+   - "1500"       → 1500
+   - "$1,500.50"  → 1500.5
+*/
 function num(v){
-  if (v===null || v===undefined) return 0;
-  if (typeof v==='number') return v;
+  if (v === null || v === undefined) return 0;
+  if (typeof v === 'number') return Number.isFinite(v) ? v : 0;
   let s = String(v).trim();
-  if (!s || s.toUpperCase()==='NULL' || s==='-') return 0;
+  if (!s || s.toUpperCase() === 'NULL' || s === '-') return 0;
+  s = s.replace(/[$\s%]/g, '');
   const lastComma = s.lastIndexOf(',');
   const lastDot   = s.lastIndexOf('.');
-  if (lastComma > lastDot){ s = s.replace(/\./g,'').replace(',', '.'); }
-  else { s = s.replace(/,/g,''); }
-  s = s.replace(/[$\s%]/g,'');
+  if (lastComma > lastDot){
+    const afterComma = s.length - lastComma - 1;
+    const dotCount   = (s.match(/\./g) || []).length;
+    if (dotCount === 0 && afterComma === 3){
+      s = s.replace(/,/g, '');
+    } else {
+      s = s.replace(/\./g, '').replace(',', '.');
+    }
+  } else {
+    s = s.replace(/,/g, '');
+  }
   const n = parseFloat(s);
   return Number.isFinite(n) ? n : 0;
 }
@@ -1279,6 +1297,19 @@ function statusIcon(name){
 function palette(n){
   const b=['#4f8cff','#3ddc97','#ffb454','#ff5c7a','#a78bfa','#38bdf8','#f472b6','#facc15','#34d399','#fb923c','#22d3ee','#f87171'];
   return Array.from({length:n},(_,i)=>b[i%b.length]);
+}
+/* ★ FIX #4: helper para contar pólizas.
+   - Si no hay columna: 1 por fila.
+   - Si la celda está vacía/NULL: 1 (asumimos 1 póliza).
+   - Si hay valor numérico: se respeta tal cual (0 → 0, 3 → 3).
+*/
+function polCountOf(r, cantCol){
+  if (!cantCol) return 1;
+  const v = r[cantCol];
+  if (v == null) return 1;
+  const s = String(v).trim();
+  if (!s || s.toUpperCase() === 'NULL') return 1;
+  return num(v);
 }
 
 /* ============================================================
@@ -1379,6 +1410,34 @@ function getFilteredRows(){
   }
   return out;
 }
+
+/* ★ FIX: getProductionRows() — universo único de producción.
+   Todas las vistas (Inicio, Región, Agencias, Trimestres) deben usar
+   este conjunto para que sus totales de NAP coincidan entre sí.
+   Criterio: solo filas con agente válido (no NULL, no vacío).
+   Es exactamente el mismo filtro que ya usaba la vista Región.
+*/
+function getProductionRows(){
+  const rows = state.filteredRows;
+  const agCol = state.agenteCol;
+  if (!agCol) return rows;
+  const isEmpty = v => {
+    if (v == null) return true;
+    const s = String(v).trim();
+    if (!s) return true;
+    const up = s.toUpperCase();
+    return up === 'NULL' || up === '(SIN DATO)' || up === 'SIN DATO'
+        || up === 'N/A' || up === 'NA' || up === '-'
+        || up === '—' || up === 'NONE';
+  };
+  const out = [];
+  for (let i = 0; i < rows.length; i++){
+    const r = rows[i];
+    if (!isEmpty(r[agCol])) out.push(r);
+  }
+  return out;
+}
+
 function applyFilters(){
   state.filteredRows = getFilteredRows();
   refreshCurrentView();
@@ -1596,7 +1655,6 @@ function initDateRangePicker(onChange){
 /* ============================================================
    INICIALIZACIÓN DE FILTROS
    ============================================================ */
-/* ★ CAMBIO: se agrega msProducto */
 let msAgente, msProducto, msEstatus, drPicker;
 function initFilters(){
   msAgente   = createMultiSelect(document.getElementById('msAgente'),   (sel) => { filters.agentes   = sel; applyFilters(); });
@@ -1616,7 +1674,6 @@ function initFilters(){
   });
 }
 
-/* ★ CAMBIO: populateFilters ahora llena también el filtro de Producto */
 function populateFilters(){
   const fgAg = document.getElementById('fgAgente');
   const fgPr = document.getElementById('fgProducto');
@@ -1647,7 +1704,31 @@ function populateFilters(){
 /* ============================================================
    CLIENTE REST
    ============================================================ */
+/* ★ FIX #2: paginación estable (order + detección de PK). */
 async function fetchAll(table, onProgress){
+  let orderCol = null;
+  try {
+    const probeUrl = new URL(`${REST}/${encodeURIComponent(table)}`);
+    probeUrl.searchParams.set('select', '*');
+    probeUrl.searchParams.set('limit', '1');
+    const probeRes = await fetch(probeUrl.toString(), {
+      headers: {
+        'apikey': CFG.key, 'Authorization': 'Bearer ' + CFG.key,
+        'Accept': 'application/json'
+      }
+    });
+    if (probeRes.ok){
+      const probeData = await probeRes.json();
+      if (Array.isArray(probeData) && probeData.length){
+        const keys = Object.keys(probeData[0]);
+        orderCol = keys.find(k => /^id$/i.test(k))
+                || keys.find(k => /_id$/i.test(k))
+                || keys.find(k => /uuid|folio|consecutivo/i.test(k))
+                || keys[0];
+      }
+    }
+  } catch(e){ /* seguir sin order */ }
+
   let all = [];
   let offset = 0;
   const PAGE = CFG.pageSize;
@@ -1658,6 +1739,7 @@ async function fetchAll(table, onProgress){
     url.searchParams.set('select', '*');
     url.searchParams.set('limit', PAGE);
     url.searchParams.set('offset', offset);
+    if (orderCol) url.searchParams.set('order', `${orderCol}.asc`);
     const res = await fetch(url.toString(), {
       headers: {
         'apikey': CFG.key, 'Authorization': 'Bearer ' + CFG.key,
@@ -1731,9 +1813,27 @@ function analyze(){
                   || state.columns.find(c => /fecha.*emisi/i.test(c))
                   || state.dateCol || null;
   state.napCol = state.columns.find(c => /^nap$/i.test(c))
+              || state.columns.find(c => /^nap\b/i.test(c) && !/id/i.test(c))
               || state.columns.find(c => /nap/i.test(c) && !/id/i.test(c)) || null;
-  const prefM=/nap|prima|cantidad.*poliza|venta|valor|total/i;
-  state.metric = state.napCol || state.numericCols.find(c=>prefM.test(c)) || state.numericCols[0] || null;
+  const metricPriority = [
+    c => /^nap$/i.test(c),
+    c => /nap/i.test(c) && !/id/i.test(c),
+    c => /^prima/i.test(c),
+    c => /prima/i.test(c) && !/id/i.test(c),
+    c => /cantidad.*poliza|cant.*p[oó]liza/i.test(c),
+    c => /^venta|ventas/i.test(c),
+    c => /^valor/i.test(c),
+    c => /^total/i.test(c)
+  ];
+  state.metric = state.napCol;
+  if (!state.metric){
+    for (const test of metricPriority){
+      const found = state.numericCols.find(test);
+      if (found){ state.metric = found; break; }
+    }
+  }
+  if (!state.metric) state.metric = state.numericCols[0] || null;
+
   state.cantPolizaCol = state.columns.find(c => /cantidad.*poliza|cant.*p[oó]liza/i.test(c)) || null;
   state.agenteCol = state.columns.find(c => /^agente$/i.test(c))
                  || state.columns.find(c => /nombre.*agente|agente.*nombre/i.test(c))
@@ -1754,6 +1854,26 @@ function analyze(){
                   || state.columns.find(c => /estatus|status/i.test(c) && !/id/i.test(c)) || null;
   const prefD=/producto|agente|mes|estatus|estado|agencia/i;
   state.dimension = state.dimCols.find(c=>prefD.test(c)) || state.dimCols[0] || null;
+
+  console.log('[Loyal] Diagnóstico de columnas:', {
+    filasCargadas: state.rows.length,
+    totalEsperado: state.totalEsperado,
+    napCol: state.napCol,
+    metric: state.metric,
+    cantPolizaCol: state.cantPolizaCol,
+    agenteCol: state.agenteCol,
+    agenciaCol: state.agenciaCol,
+    productoCol: state.productoCol,
+    estatusCol: state.estatusCol,
+    emisionCol: state.emisionCol
+  });
+  if (state.napCol){
+    const sumaNap = state.rows.reduce((a,r)=>a+num(r[state.napCol]),0);
+    console.log(`[Loyal] Suma NAP total (sin filtros): ${sumaNap.toLocaleString('es-CO')}`);
+  }
+  if (state.totalEsperado != null && state.rows.length !== state.totalEsperado){
+    console.warn(`[Loyal] ⚠️ Filas cargadas (${state.rows.length}) ≠ total esperado (${state.totalEsperado}). Posible problema de paginación.`);
+  }
 }
 
 /* ============================================================
@@ -1800,7 +1920,8 @@ function updateNavState(){
    VISTA: DASHBOARD
    ============================================================ */
 function renderDashboardView(){
-  const rows = state.filteredRows;
+  /* ★ FIX: usar getProductionRows() para alinear el universo con Región */
+  const rows = getProductionRows();
   renderKPIs(rows);
   renderTopProducts(rows);
   renderTopAgents(rows);
@@ -1822,7 +1943,7 @@ function renderKPIs(rows){
   let totalPolizas;
   if (cantCol){
     let suma = 0;
-    rows.forEach(r=>{ const n = num(r[cantCol]); suma += (n > 0 ? n : 1); });
+    rows.forEach(r=>{ suma += polCountOf(r, cantCol); });
     totalPolizas = suma;
   } else { totalPolizas = rows.length; }
   const dcol = getDateCol();
@@ -1929,8 +2050,7 @@ function renderTopProducts(rows){
     if (!map.has(k)) map.set(k, { nap:0, polizas:0, statusCounts:new Map() });
     const g = map.get(k);
     g.nap += num(r[napCol]);
-    const n = num(r[cantCol]);
-    g.polizas += (n > 0 ? n : 1);
+    g.polizas += polCountOf(r, cantCol);
     if (estCol){
       const est = r[estCol];
       if (est!=null){
@@ -1999,8 +2119,7 @@ function renderTopAgents(rows){
     if (!map.has(k)) map.set(k, { nap:0, polizas:0, count:0 });
     const g = map.get(k);
     g.nap += num(r[napCol]);
-    const n = num(r[cantCol]);
-    g.polizas += (n > 0 ? n : 1);
+    g.polizas += polCountOf(r, cantCol);
     g.count++;
   });
   const sorted = [...map.entries()].sort((a,b)=>b[1].nap - a[1].nap);
@@ -2081,8 +2200,7 @@ function renderDashboardCharts(rows){
       if (!productData.has(k)) productData.set(k, {nap:0, polizas:0});
       const g = productData.get(k);
       g.nap += num(r[napCol]);
-      const n = num(r[cantCol]);
-      g.polizas += (n > 0 ? n : 1);
+      g.polizas += polCountOf(r, cantCol);
     });
     const sorted=[...productData.entries()].sort((a,b)=>b[1].nap-a[1].nap);
     dL = sorted.map(([k])=>k);
@@ -2128,7 +2246,8 @@ function renderRegionView(){
     document.getElementById('regionCount').textContent = '—';
     return;
   }
-  const rows = state.filteredRows;
+  /* Región ya aplicaba el mismo filtro; ahora ambos usan getProductionRows() */
+  const rows = getProductionRows();
   const napCol = state.napCol, cantCol = state.cantPolizaCol, estCol = state.estatusCol;
   const map = new Map();
   rows.forEach(r=>{
@@ -2139,8 +2258,7 @@ function renderRegionView(){
     if (!map.has(k)) map.set(k, { nap:0, polizas:0, count:0, statusCounts:new Map() });
     const g = map.get(k);
     g.nap += num(r[napCol]);
-    const n = num(r[cantCol]);
-    const polCount = (n > 0 ? n : 1);
+    const polCount = polCountOf(r, cantCol);
     g.polizas += polCount;
     g.count++;
     if (estCol){
@@ -2268,15 +2386,13 @@ function buildRegionEntry(rows){
   const cantCol   = state.cantPolizaCol;
   const estCol    = state.estatusCol;
   const agenteCol = state.agenteCol;
-  const agenciaCol= state.agenciaCol;
   let sum = 0, totalPol = 0, activas = 0, pendientes = 0;
   const agentsSet = new Set();
   const agentNap = new Map();
   rows.forEach(r=>{
     const nap = num(r[napCol]);
     sum += nap;
-    const n = num(r[cantCol]);
-    const pol = n > 0 ? n : 1;
+    const pol = polCountOf(r, cantCol);
     totalPol += pol;
     if (agenteCol){
       const a = r[agenteCol];
@@ -2318,7 +2434,8 @@ function renderAgenciaView(){
     document.getElementById('agenciaAgentsCount').textContent='0';
     return;
   }
-  const rows = state.filteredRows, m = state.metric;
+  /* ★ FIX: universo alineado con Inicio / Región / Trimestres */
+  const rows = getProductionRows(), m = state.metric;
   const norm = s => String(s).trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   const ownValues = new Map();
   const ownCounts = new Map();
@@ -2356,13 +2473,7 @@ function renderAgenciaView(){
         }
       }
     }
-    const polCount = (()=>{
-      if (state.cantPolizaCol){
-        const n = num(r[state.cantPolizaCol]);
-        return n > 0 ? n : 1;
-      }
-      return 1;
-    })();
+    const polCount = polCountOf(r, state.cantPolizaCol);
     d.totalPol += polCount;
     if (state.estatusCol){
       const est = r[state.estatusCol];
@@ -2611,7 +2722,8 @@ function renderAgenciaAgentsBreakdown(sortedList){
    MODAL AGENTE
    ============================================================ */
 function openAgentModal(agentName, agencyName){
-  const rows = state.filteredRows;
+  /* ★ FIX: usar el mismo universo de producción */
+  const rows = getProductionRows();
   const agCol = state.agenteCol;
   if (!agCol) return;
   const agentRows = rows.filter(r=>{
@@ -2631,8 +2743,7 @@ function openAgentModal(agentName, agencyName){
   agentRows.forEach(r=>{
     const nap = num(r[napCol]);
     napTotal += nap;
-    const n = num(r[cantCol]);
-    const pol = n > 0 ? n : 1;
+    const pol = polCountOf(r, cantCol);
     polizasTotal += pol;
     if (estCol){
       const s = r[estCol];
@@ -2894,7 +3005,8 @@ function renderAgencyGoals(agencyRows, meta, dcol, napCol){
    MODAL AGENCIA
    ============================================================ */
 function openAgencyModal(agencyName){
-  const rows = state.filteredRows;
+  /* ★ FIX: usar el mismo universo de producción */
+  const rows = getProductionRows();
   const agCol = state.agenciaCol;
   if (!agCol) return;
   const agenteCol = state.agenteCol;
@@ -2924,8 +3036,7 @@ function openAgencyModal(agencyName){
   agencyRows.forEach(r=>{
     const nap = num(r[napCol]);
     napTotal += nap;
-    const n = num(r[cantCol]);
-    const pol = n > 0 ? n : 1;
+    const pol = polCountOf(r, cantCol);
     polizasTotal += pol;
     if (estCol){
       const s = r[estCol];
@@ -3304,7 +3415,8 @@ function renderTrimestreView(){
   }
   renderTrimAgenciaPills();
   renderTrimStatusPills();
-  let sourceRows = state.rows;
+  /* ★ FIX: universo alineado con Inicio / Región / Agencias */
+  let sourceRows = getProductionRows();
   const agencyFilter = state.selectedTrimestreAgencia;
   const agencyCol = state.agenciaCol;
   const norm = s => String(s).trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
@@ -4003,6 +4115,9 @@ async function loadTable(table){
     renderDashboardView();
     if (state.currentView!=='dashboard') switchView(state.currentView);
     document.getElementById('helpBox').classList.add('hidden');
+    if (state.totalEsperado != null && state.rows.length !== state.totalEsperado){
+      console.warn(`[Loyal] ⚠️ Se cargaron ${state.rows.length} de ${state.totalEsperado} filas. Revisa paginación/permisos.`);
+    }
   } catch (e){
     state.rows=[]; state.filteredRows=[]; state.columns=[];
     document.getElementById('filterBar').classList.add('hidden');
@@ -4087,7 +4202,6 @@ function bindEvents(){
   const themeBtn = document.getElementById('themeToggle');
   if (themeBtn) themeBtn.onclick = toggleTheme;
 
-  /* ★ CAMBIO: se resetea también el filtro de producto */
   document.getElementById('bb-reset').onclick = ()=>{
     filters.agentes   = null;
     filters.productos = null;
